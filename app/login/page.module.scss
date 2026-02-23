@@ -1,0 +1,60 @@
+@import '@/styles/variables';
+
+.loadingContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(1200px circle at top, rgba($primary-color, 0.08), transparent 40%),
+    linear-gradient(135deg, $gray-50, $gray-100);
+}
+
+.loadingCard {
+  background-color: $white;
+  padding: $spacing-8 $spacing-10;
+  border-radius: $radius-xl;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-4;
+
+  animation: fadeIn 0.4s ease-out;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid $gray-200;
+  border-top-color: $primary-color;
+  animation: spin 0.9s linear infinite;
+}
+
+.loadingText {
+  font-size: $text-sm;
+  color: $gray-600;
+  letter-spacing: 0.02em;
+}
+
+/* Анимации */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

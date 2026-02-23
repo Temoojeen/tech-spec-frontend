@@ -1,0 +1,213 @@
+/* app/dashboard/page.module.scss */
+
+/*=============== GOOGLE FONTS ===============*/
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+/*=============== VARIABLES ===============*/
+:global(:root) {
+  --total-color: #2563eb;   /* всего */
+  --free-color: #16a34a;    /* свободно */
+  --used-color: #dc2626;    /* выдано */
+
+  --title-color: #111827;
+  --text-color: #374151;
+  --muted: #6b7280;
+
+  --body-bg: #f3f4f6;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+
+  --font: "Poppins", sans-serif;
+}
+
+/*=============== BASE ===============*/
+:global(*) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:global(body) {
+  font-family: var(--font);
+  background: var(--body-bg);
+  color: var(--text-color);
+}
+
+/*=============== LOADING ===============*/
+.loadingContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--total-color);
+}
+
+/*=============== DASHBOARD GRID ===============*/
+.dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  place-items: center;
+  gap: 50px;
+  margin: 32px 0;
+}
+
+/*=============== OBJECT CARD ===============*/
+.generalStatistics {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/*=============== HEADER ===============*/
+.statisticsHeader {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--title-color);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/*=============== STATS GRID ===============*/
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/*=============== STAT CARD ===============*/
+.statWrapper {
+  background: #f9fafb;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+}
+
+/*=============== NUMBER ===============*/
+.statItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.digit {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/*=============== LABEL ===============*/
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/*=============== COLOR SEMANTICS ===============*/
+.total {
+  color: var(--total-color);
+}
+
+.free {
+  color: var(--free-color);
+}
+
+.used {
+  color: var(--used-color);
+}
+
+/*=============== PROGRESS BAR ===============*/
+.progressBar {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/*=============== CARD LINKS (BOTTOM BLOCK) ===============*/
+.container {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.card__container {
+  display: grid;
+  gap: 32px;
+}
+
+/*=============== IMAGE CARD ===============*/
+.card__article {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.card__img {
+  width: 500px;
+  height: 350px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+/*=============== HOVER DATA ===============*/
+.card__data {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+.card__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--title-color);
+}
+
+.card__description {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/*=============== RESPONSIVE ===============*/
+@media (min-width: 768px) {
+  .card__container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1120px) {
+  .card__container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

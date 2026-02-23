@@ -1,0 +1,119 @@
+@import '@/styles/variables';
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Фоновая картинка */
+  background-image:
+    
+    url('https://i.pinimg.com/originals/5b/e6/d8/5be6d896d8951394e06744a5d8f8b688.jpg');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: $spacing-6;
+}
+
+.form {
+  width: 100%;
+  max-width: 500px;
+  padding: $spacing-10 $spacing-8;
+
+  /* Glassmorphism */
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  border-radius: $radius-xl;
+  border: 1px solid white;
+
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.35);
+
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.title {
+  text-align: center;
+  font-size: $text-2xl;
+  font-weight: 700;
+  color: $white;
+  margin-bottom: $spacing-8;
+  letter-spacing: -0.02em;
+}
+
+.field {
+  margin-bottom: $spacing-5;
+}
+
+.label {
+  display: block;
+  font-size: $text-sm;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: $spacing-1;
+}
+
+.input {
+  width: 93%;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  background-color: rgba(255, 255, 255, 0.15);
+  color: $white;
+  font-size: $text-base;
+
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    background-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 4px rgba($primary-color, 0.25);
+  }
+}
+
+.error {
+  background-color: rgba($danger-color, 0.15);
+  border-left: 4px solid $danger-color;
+  color: $white;
+  padding: $spacing-4;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-5;
+  font-size: $text-sm;
+  animation: shake 0.35s ease;
+}
+
+.errorText {
+  color: #ffd6d6;
+  font-size: $text-xs;
+  margin-top: $spacing-1;
+}
+
+/* Анимации */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}

@@ -1,0 +1,429 @@
+@import '@/styles/variables';
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: $spacing-4;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.title {
+  font-size: $text-2xl;
+  font-weight: 600;
+  color: $gray-900;
+  margin: 0;
+}
+
+.backLink {
+  color: $primary-color;
+  text-decoration: none;
+  font-size: $text-sm;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-md;
+  transition: all 0.2s ease;
+  background-color: rgba($primary-color, 0.1);
+
+  &:hover {
+    background-color: rgba($primary-color, 0.2);
+    text-decoration: none;
+  }
+}
+
+.serverError {
+  background-color: rgba($danger-color, 0.1);
+  border: 1px solid $danger-color;
+  color: $danger-color;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-6;
+  font-size: $text-sm;
+}
+
+.form {
+  background-color: $white;
+  border-radius: $radius-lg;
+  padding: $spacing-6;
+  box-shadow: $shadow;
+}
+
+.formSection {
+  margin-bottom: $spacing-8;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  font-size: $text-lg;
+  font-weight: 600;
+  color: $gray-900;
+  margin-bottom: $spacing-4;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $gray-200;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-4;
+}
+
+.formField {
+  grid-column: span 1;
+}
+
+.formFieldFull {
+  grid-column: span 2;
+}
+
+.label {
+  display: block;
+  font-size: $text-sm;
+  font-weight: 500;
+  color: $gray-700;
+  margin-bottom: $spacing-1;
+}
+
+.required {
+  color: $danger-color;
+  margin-left: $spacing-1;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radius-md;
+  font-size: $text-sm;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background-color: $white;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &.error {
+    border-color: $danger-color;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($danger-color, 0.1);
+    }
+  }
+}
+
+.select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right $spacing-2 center;
+  background-size: $spacing-4;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.errorText {
+  color: $danger-color;
+  font-size: $text-xs;
+  margin-top: $spacing-1;
+}
+
+.formActions {
+  display: flex;
+  gap: $spacing-4;
+  margin-top: $spacing-8;
+  padding-top: $spacing-4;
+  border-top: 1px solid $gray-200;
+}
+
+.cancelButton {
+  padding: $spacing-2 $spacing-4;
+  background-color: $gray-200;
+  color: $gray-700;
+  text-decoration: none;
+  border-radius: $radius-md;
+  font-size: $text-sm;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: $gray-300;
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: $text-lg;
+  color: $gray-600;
+}
+@import '@/styles/variables';
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: $spacing-4;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.title {
+  font-size: $text-2xl;
+  font-weight: 600;
+  color: $gray-900;
+  margin: 0;
+}
+
+.backLink {
+  color: $primary-color;
+  text-decoration: none;
+  font-size: $text-sm;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-md;
+  transition: all 0.2s ease;
+  background-color: rgba($primary-color, 0.1);
+
+  &:hover {
+    background-color: rgba($primary-color, 0.2);
+    text-decoration: none;
+  }
+}
+
+.serverError {
+  background-color: rgba($danger-color, 0.1);
+  border: 1px solid $danger-color;
+  color: $danger-color;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-6;
+  font-size: $text-sm;
+}
+
+.error {
+  text-align: center;
+  padding: $spacing-8;
+  background-color: $white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+  
+  h2 {
+    color: $danger-color;
+    margin-bottom: $spacing-4;
+  }
+}
+
+.form {
+  background-color: $white;
+  border-radius: $radius-lg;
+  padding: $spacing-6;
+  box-shadow: $shadow;
+}
+
+.formSection {
+  margin-bottom: $spacing-8;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  font-size: $text-lg;
+  font-weight: 600;
+  color: $gray-900;
+  margin-bottom: $spacing-4;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $gray-200;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-4;
+}
+
+.formField {
+  grid-column: span 1;
+}
+
+.formFieldFull {
+  grid-column: span 2;
+}
+
+.label {
+  display: block;
+  font-size: $text-sm;
+  font-weight: 500;
+  color: $gray-700;
+  margin-bottom: $spacing-1;
+}
+
+.required {
+  color: $danger-color;
+  margin-left: $spacing-1;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radius-md;
+  font-size: $text-sm;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background-color: $white;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &.error {
+    border-color: $danger-color;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($danger-color, 0.1);
+    }
+  }
+}
+
+.select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right $spacing-2 center;
+  background-size: $spacing-4;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.errorText {
+  color: $danger-color;
+  font-size: $text-xs;
+  margin-top: $spacing-1;
+}
+
+// Стили для группы ввода мощности
+.powerInputGroup {
+  display: flex;
+  gap: $spacing-2;
+  width: 100%;
+}
+
+.powerUnitSelector {
+  display: flex;
+  gap: $spacing-1;
+  background-color: $gray-100;
+  padding: $spacing-1;
+  border-radius: $radius-md;
+  flex-shrink: 0;
+}
+
+.unitButton {
+  padding: $spacing-2 $spacing-3;
+  border: none;
+  background-color: transparent;
+  color: $gray-600;
+  font-size: $text-sm;
+  font-weight: 500;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+
+  &:hover {
+    background-color: rgba($primary-color, 0.1);
+    color: $primary-color;
+  }
+
+  &.active {
+    background-color: $primary-color;
+    color: $white;
+  }
+}
+
+.powerInput {
+  flex: 1;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radius-md;
+  font-size: $text-sm;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &.error {
+    border-color: $danger-color;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($danger-color, 0.1);
+    }
+  }
+}
+
+.hint {
+  font-size: $text-xs;
+  color: $gray-500;
+  margin-top: $spacing-1;
+  font-style: italic;
+}
+
+.formActions {
+  display: flex;
+  gap: $spacing-4;
+  margin-top: $spacing-8;
+  padding-top: $spacing-4;
+  border-top: 1px solid $gray-200;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: $text-lg;
+  color: $gray-600;
+}

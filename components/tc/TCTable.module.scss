@@ -1,0 +1,82 @@
+@import '@/styles/variables';
+
+.container {
+  overflow-x: auto;
+  background-color: $white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.thead {
+  background-color: $gray-50;
+  border-bottom: 1px solid $gray-200;
+}
+
+.th {
+  padding: $spacing-3 $spacing-4;
+  text-align: left;
+  font-size: $text-xs;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $gray-500;
+}
+
+.tbody {
+  background-color: $white;
+}
+
+.tr {
+  border-bottom: 1px solid $gray-200;
+  
+  &:hover {
+    background-color: $gray-50;
+  }
+}
+
+.td {
+  padding: $spacing-4;
+  white-space: nowrap;
+  font-size: $text-sm;
+  color: $gray-900;
+}
+
+.loading {
+  text-align: center;
+  padding: $spacing-8;
+  color: $gray-600;
+  font-size: $text-base;
+}
+
+.empty {
+  text-align: center;
+  padding: $spacing-8;
+  color: $gray-500;
+  font-size: $text-base;
+  background-color: $white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+}
+
+.editButton {
+  color: $primary-color;
+  margin-right: $spacing-4;
+  
+  &:hover {
+    color: $primary-hover;
+  }
+}
+
+.deleteButton {
+  color: $danger-color;
+  
+  &:hover {
+    color: darken($danger-color, 10%);
+  }
+}

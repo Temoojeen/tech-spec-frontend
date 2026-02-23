@@ -1,0 +1,90 @@
+@import '@/styles/variables';
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  border-radius: $radius-md;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  outline: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  // Варианты
+  &.primary {
+    background-color: $primary-color;
+    color: $white;
+
+    &:hover:not(:disabled) {
+      background-color: $primary-hover;
+    }
+  }
+
+  &.secondary {
+    background-color: $gray-200;
+    color: $gray-700;
+
+    &:hover:not(:disabled) {
+      background-color: $gray-300;
+    }
+  }
+
+  &.danger {
+    background-color: $danger-color;
+    color: $white;
+
+    &:hover:not(:disabled) {
+      background-color: darken($danger-color, 10%);
+    }
+  }
+
+  &.success {
+    background-color: $success-color;
+    color: $white;
+
+    &:hover:not(:disabled) {
+      background-color: darken($success-color, 10%);
+    }
+  }
+
+  // Размеры
+  &.small {
+    padding: $spacing-2 $spacing-3;
+    font-size: $text-sm;
+  }
+
+  &.medium {
+    padding: $spacing-2 $spacing-4;
+    font-size: $text-base;
+  }
+
+  &.large {
+    padding: $spacing-3 $spacing-6;
+    font-size: $text-lg;
+  }
+
+  &.fullWidth {
+    width: 100%;
+  }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid $white;
+  border-top-color: transparent;
+  border-radius: $radius-full;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
