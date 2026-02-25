@@ -49,6 +49,7 @@ export default function TCTable({
           <tr>
             <th className={styles.th}>Наименование организации</th>
             <th className={styles.th}>Выданая мощность</th>
+            <th className={styles.th}>Объект</th>
             <th className={styles.th}>Номер ТУ</th>
             <th className={styles.th}>Дата выдачи</th>
             <th className={styles.th}>
@@ -64,6 +65,7 @@ export default function TCTable({
               <td className={styles.td}>
                 {formatPower(tc.power_amount, resourceType)}
               </td>
+              <td className={styles.td}>{tc.object_name}</td>
               <td className={styles.td}>{tc.tc_number}</td>
               <td className={styles.td}>{formatDate(tc.issue_date)}</td>
               <td className={styles.td}>

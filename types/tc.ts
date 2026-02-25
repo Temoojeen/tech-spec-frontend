@@ -8,6 +8,7 @@ export interface TechnicalCondition {
   organization_name: string;
   tc_type: TCType;
   resource_type: ResourceType;
+  object_name: string;
   tc_number: string;
   power_amount: number;
   issue_date: string;

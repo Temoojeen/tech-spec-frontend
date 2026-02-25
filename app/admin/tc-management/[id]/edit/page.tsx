@@ -10,7 +10,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
-import { Organization, TechnicalCondition } from '@/types';
+import { Organization, PowerObject, TechnicalCondition } from '@/types';
 import Button from '@/components/ui/Button';
 import Header from '@/components/Header/Header';
 import styles from './page.module.scss';
@@ -24,6 +24,12 @@ const tcSchema = z
       .number()
       .refine(val => !Number.isNaN(val), {
         message: 'Выберите организацию',
+      }),
+    
+    object_id: z // Add this field
+      .number()
+      .refine(val => !Number.isNaN(val), {
+        message: 'Выберите объект',
       }),
 
     tc_type: z.enum(['permanent', 'temporary']),
@@ -124,6 +130,15 @@ export default function EditTCPage() {
     enabled: isAdmin,
   });
 
+  const { data: objects, isLoading: objectsLoading } = useQuery({
+    queryKey: ['objects'],
+    queryFn: async () => {
+      const response = await api.get<PowerObject[]>('/objects/');
+      return response.data;
+    },
+    enabled: isAdmin,
+  });
+
   /* =========================
      FILL FORM
   ========================= */
@@ -137,6 +152,7 @@ export default function EditTCPage() {
       tc_type: tc.tc_type,
       resource_type: tc.resource_type,
       tc_number: tc.tc_number,
+      object_id: tc.object_id,
       power_amount: tc.power_amount,
       issue_date: formatDate(tc.issue_date),
       expiry_date: formatDate(tc.expiry_date),
@@ -181,7 +197,7 @@ export default function EditTCPage() {
   /* =========================
      STATES
   ========================= */
-  if (authLoading || tcLoading || orgsLoading) {
+  if (authLoading || tcLoading || orgsLoading|| objectsLoading) {
     return <div className={styles.loading}>Загрузка...</div>;
   }
 
@@ -216,6 +232,23 @@ export default function EditTCPage() {
             <select {...register('organization_id', { valueAsNumber: true })}>
               <option value="">Выберите организацию</option>
               {organizations?.map(org => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+            {errors.organization_id && (
+              <p className={styles.errorText}>
+                {errors.organization_id.message}
+              </p>
+            )}
+          </div>
+
+          <div className={styles.formField}>
+            <label>Объект *</label>
+            <select {...register('object_id', { valueAsNumber: true })}>
+              <option value="">Выберите объект</option>
+              {objects?.map(org => (
                 <option key={org.id} value={org.id}>
                   {org.name}
                 </option>

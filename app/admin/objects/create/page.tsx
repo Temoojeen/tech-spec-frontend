@@ -137,7 +137,7 @@ export default function CreateObjectPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Создание нового объекта</h1>
         <Link href="/admin/objects" className={styles.backLink}>
-          ← Назад к списку
+           Назад к списку
         </Link>
       </div>
 

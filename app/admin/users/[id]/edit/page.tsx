@@ -176,71 +176,95 @@ export default function EditUserPage() {
   /* ===================== RENDER ===================== */
 
   return (
-    <div className={styles.container}>
-      <Header />
+  <div className={styles.container}>
+    <Header />
 
-      <h1 className={styles.title}>
-        Редактирование пользователя {user.username}
-      </h1>
+    <h1 className={styles.title}>
+      Редактирование пользователя {user.username}
+    </h1>
 
-      {serverError && (
-        <div className={styles.serverError}>{serverError}</div>
-      )}
+    {serverError && (
+      <div className={styles.serverError}>{serverError}</div>
+    )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-        <input {...register('username')} placeholder="Username" />
-        {errors.username && <p>{errors.username.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <div className={styles.formField}>
+        <label>Имя пользователя *</label>
+        <input 
+          {...register('username')} 
+          placeholder="john_doe"
+          className={!errors.username ? styles.validInput : ''}
+        />
+        {errors.username && <p className={styles.errorText}>{errors.username.message}</p>}
+      </div>
 
-        <input {...register('email')} placeholder="Email" />
-        {errors.email && <p>{errors.email.message}</p>}
+      <div className={styles.formField}>
+        <label>Email *</label>
+        <input 
+          {...register('email')} 
+          type="email"
+          placeholder="user@example.com"
+          className={!errors.email ? styles.validInput : ''}
+        />
+        {errors.email && <p className={styles.errorText}>{errors.email.message}</p>}
+      </div>
 
-        <div>
+      <div className={styles.formField}>
+        <label>Новый пароль</label>
+        <div className={styles.passwordWrapper}>
           <input
             type={showPassword ? 'text' : 'password'}
             {...register('password')}
-            placeholder="Новый пароль"
+            placeholder="Оставьте пустым, чтобы не менять"
           />
           <button
             type="button"
+            className={styles.passwordToggle}
             onClick={() => setShowPassword(v => !v)}
           >
-            👁
+            {showPassword ? '👁️' : '👁️‍🗨️'}
           </button>
         </div>
+        {errors.password && <p className={styles.errorText}>{errors.password.message}</p>}
+      </div>
 
+      <div className={styles.formField}>
+        <label>Роль *</label>
         <select {...register('role')}>
           <option value="user">Пользователь</option>
           <option value="admin">Администратор</option>
         </select>
+      </div>
 
-        {selectedRole === 'user' && (
-          <>
-            <input
-              {...register('organization_name')}
-              list="organizations"
-              placeholder="Организация"
-            />
-            <datalist id="organizations">
-              {organizations?.map(org => (
-                <option key={org.id} value={org.name} />
-              ))}
-            </datalist>
-          </>
-        )}
-
-        <div className={styles.actions}>
-          <Button type="submit" loading={updateMutation.isPending}>
-            Сохранить
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => router.push('/admin/users')}
-          >
-            Отмена
-          </Button>
+      {selectedRole === 'user' && (
+        <div className={styles.formField}>
+          <label>Организация</label>
+          <input
+            {...register('organization_name')}
+            list="organizations"
+            placeholder="Выберите или введите организацию"
+          />
+          <datalist id="organizations">
+            {organizations?.map(org => (
+              <option key={org.id} value={org.name} />
+            ))}
+          </datalist>
         </div>
-      </form>
-    </div>
-  );
+      )}
+
+      <div className={styles.actions}>
+        <Button type="submit" loading={updateMutation.isPending}>
+          Сохранить
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => router.push('/admin/users')}
+        >
+          Отмена
+        </Button>
+      </div>
+    </form>
+  </div>
+);
 }

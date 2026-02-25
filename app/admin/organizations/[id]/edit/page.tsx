@@ -142,7 +142,7 @@ export default function EditOrganizationPage() {
         <div className={styles.error}>
           <h2>Организация не найдена</h2>
           <Link href="/admin/organizations" className={styles.backLink}>
-            ← к списку организаций
+            к списку организаций
           </Link>
         </div>
       </div>
@@ -155,7 +155,7 @@ export default function EditOrganizationPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Редактирование организации {organization.name}</h1>
         <Link href="/admin/organizations" className={styles.backLink}>
-          ← к списку организаций
+          к списку организаций
         </Link>
       </div>
 

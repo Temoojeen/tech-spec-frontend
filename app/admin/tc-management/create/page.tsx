@@ -157,128 +157,146 @@ export default function CreateTCPage() {
      RENDER
   ========================= */
   return (
-    <div className={styles.container}>
-      <Header />
+  <div className={styles.container}>
+    <Header />
 
-      <h1 className={styles.title}>Создание нового ТУ</h1>
+    <h1 className={styles.title}>Создание нового ТУ</h1>
 
-      {serverError && (
-        <div className={styles.serverError}>{serverError}</div>
-      )}
+    {serverError && (
+      <div className={styles.serverError}>{serverError}</div>
+    )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-        <div className={styles.formGrid}>
-          <div className={styles.formField}>
-            <label>Организация *</label>
-            <select {...register('organization_id', { valueAsNumber: true })}>
-              <option value="">Выберите организацию</option>
-              {organizations?.map(org => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
-            {errors.organization_id && (
-              <p className={styles.errorText}>
-                {errors.organization_id.message}
-              </p>
-            )}
-          </div>
-
-          <div className={styles.formField}>
-            <label>Объект выдачи *</label>
-            <select {...register('object_id', { valueAsNumber: true })}>
-              <option value="">Выберите объект</option>
-              {objects?.map(obj => (
-                <option key={obj.id} value={obj.id}>
-                  {obj.name} — {obj.max_power_kw} кВт
-                </option>
-              ))}
-            </select>
-            {errors.object_id && (
-              <p className={styles.errorText}>
-                {errors.object_id.message}
-              </p>
-            )}
-          </div>
-
-          <div className={styles.formField}>
-            <label>Тип ресурса *</label>
-            <select {...register('resource_type')}>
-              <option value="electricity">Электроснабжение</option>
-              <option value="water">Водоснабжение</option>
-            </select>
-          </div>
-
-          <div className={styles.formField}>
-            <label>Тип ТУ *</label>
-            <select {...register('tc_type')}>
-              <option value="permanent">Постоянное</option>
-              <option value="temporary">Временное</option>
-            </select>
-          </div>
-
-          <div className={styles.formField}>
-            <label>Номер ТУ *</label>
-            <input {...register('tc_number')} />
-            {errors.tc_number && (
-              <p className={styles.errorText}>{errors.tc_number.message}</p>
-            )}
-          </div>
-
-          <div className={styles.formField}>
-            <label>
-              Мощность * ({resourceType === 'electricity' ? 'кВт' : 'м³/ч'})
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              {...register('power_amount', { valueAsNumber: true })}
-            />
-            {errors.power_amount && (
-              <p className={styles.errorText}>
-                {errors.power_amount.message}
-              </p>
-            )}
-          </div>
-
-          <div className={styles.formField}>
-            <label>Дата выдачи *</label>
-            <input type="date" {...register('issue_date')} />
-            {errors.issue_date && (
-              <p className={styles.errorText}>{errors.issue_date.message}</p>
-            )}
-          </div>
-
-          {tcType === 'temporary' && (
-            <div className={styles.formField}>
-              <label>Дата окончания *</label>
-              <input type="date" {...register('expiry_date')} />
-              {errors.expiry_date && (
-                <p className={styles.errorText}>
-                  {errors.expiry_date.message}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className={styles.formFieldFull}>
-            <label>Примечания</label>
-            <textarea rows={4} {...register('notes')} />
-          </div>
-        </div>
-
-        <div className={styles.formActions}>
-          <Button
-            type="submit"
-            loading={createMutation.isPending}
-            disabled={createMutation.isPending}
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <div className={styles.formGrid}>
+        <div className={styles.formField}>
+          <label>Организация *</label>
+          <select 
+            {...register('organization_id', { valueAsNumber: true })}
+            className={!errors.organization_id ? styles.validInput : ''}
           >
-            Создать ТУ
-          </Button>
-          <Link href="/admin/tc-management">Отмена</Link>
+            <option value="">Выберите организацию</option>
+            {organizations?.map(org => (
+              <option key={org.id} value={org.id}>
+                {org.name}
+              </option>
+            ))}
+          </select>
+          {errors.organization_id && (
+            <p className={styles.errorText}>
+              {errors.organization_id.message}
+            </p>
+          )}
         </div>
-      </form>
-    </div>
-  );
+
+        <div className={styles.formField}>
+          <label>Объект выдачи *</label>
+          <select 
+            {...register('object_id', { valueAsNumber: true })}
+            className={!errors.object_id ? styles.validInput : ''}
+          >
+            <option value="">Выберите объект</option>
+            {objects?.map(obj => (
+              <option key={obj.id} value={obj.id}>
+                {obj.name} — {obj.max_power_kw} кВт
+              </option>
+            ))}
+          </select>
+          {errors.object_id && (
+            <p className={styles.errorText}>
+              {errors.object_id.message}
+            </p>
+          )}
+        </div>
+
+        <div className={styles.formField}>
+          <label>Тип ресурса *</label>
+          <select {...register('resource_type')}>
+            <option value="electricity">Электроснабжение</option>
+            <option value="water">Водоснабжение</option>
+          </select>
+        </div>
+
+        <div className={styles.formField}>
+          <label>Тип ТУ *</label>
+          <select {...register('tc_type')}>
+            <option value="permanent">Постоянное</option>
+            <option value="temporary">Временное</option>
+          </select>
+        </div>
+
+        <div className={styles.formField}>
+          <label>Номер ТУ *</label>
+          <input 
+            {...register('tc_number')} 
+            className={!errors.tc_number ? styles.validInput : ''}
+          />
+          {errors.tc_number && (
+            <p className={styles.errorText}>{errors.tc_number.message}</p>
+          )}
+        </div>
+
+        <div className={styles.formField}>
+          <label>
+            Мощность * ({resourceType === 'electricity' ? 'кВт' : 'м³/ч'})
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            {...register('power_amount', { valueAsNumber: true })}
+            className={!errors.power_amount ? styles.validInput : ''}
+          />
+          {errors.power_amount && (
+            <p className={styles.errorText}>
+              {errors.power_amount.message}
+            </p>
+          )}
+        </div>
+
+        <div className={styles.formField}>
+          <label>Дата выдачи *</label>
+          <input 
+            type="date" 
+            {...register('issue_date')} 
+            className={!errors.issue_date ? styles.validInput : ''}
+          />
+          {errors.issue_date && (
+            <p className={styles.errorText}>{errors.issue_date.message}</p>
+          )}
+        </div>
+
+        {tcType === 'temporary' && (
+          <div className={styles.formField}>
+            <label>Дата окончания *</label>
+            <input 
+              type="date" 
+              {...register('expiry_date')} 
+              className={!errors.expiry_date ? styles.validInput : ''}
+            />
+            {errors.expiry_date && (
+              <p className={styles.errorText}>
+                {errors.expiry_date.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className={styles.formFieldFull}>
+          <label>Примечания</label>
+          <textarea rows={4} {...register('notes')} />
+        </div>
+      </div>
+
+      <div className={styles.formActions}>
+        <Button
+          type="submit"
+          loading={createMutation.isPending}
+          disabled={createMutation.isPending}
+        >
+          Создать ТУ
+        </Button>
+        <Link href="/admin/tc-management">Отмена</Link>
+      </div>
+    </form>
+  </div>
+);
 }

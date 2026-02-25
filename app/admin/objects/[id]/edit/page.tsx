@@ -143,52 +143,97 @@ export default function EditObjectPage() {
   }
 
   // ===== UI =====
-  return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Редактирование объекта</h1>
+ return (
+  <div className={styles.container}>
+    <h1 className={styles.title}>Редактирование объекта</h1>
 
-      {serverError && (
-        <div className={styles.serverError}>{serverError}</div>
-      )}
+    {serverError && (
+      <div className={styles.serverError}>{serverError}</div>
+    )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-        <input {...register('name')} />
-        {errors.name && <p>{errors.name.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <div className={styles.formField}>
+        <label>Название *</label>
+        <input 
+          {...register('name')} 
+          placeholder="Подстанция 164"
+          className={!errors.name ? styles.validInput : ''}
+        />
+        {errors.name && <p className={styles.errorText}>{errors.name.message}</p>}
+      </div>
 
+      <div className={styles.formField}>
+        <label>Тип *</label>
         <select {...register('type')}>
           <option value="substation">Подстанция</option>
           <option value="tp">ТП</option>
           <option value="kru">КРУ</option>
         </select>
+      </div>
 
-        <div>
-          <button type="button" onClick={() => setValue('power_unit', 'mw')}>
-            МВт
-          </button>
-          <button type="button" onClick={() => setValue('power_unit', 'kw')}>
-            кВт
-          </button>
+      <div className={styles.powerSection}>
+        <label>Мощность *</label>
+        <div className={styles.powerInputGroup}>
+          <div className={styles.powerUnitSelector}>
+            <button
+              type="button"
+              className={`${styles.unitButton} ${powerUnit === 'mw' ? styles.active : ''}`}
+              onClick={() => setValue('power_unit', 'mw')}
+            >
+              МВт
+            </button>
+            <button
+              type="button"
+              className={`${styles.unitButton} ${powerUnit === 'kw' ? styles.active : ''}`}
+              onClick={() => setValue('power_unit', 'kw')}
+            >
+              кВт
+            </button>
+          </div>
+
+          <input
+            type="number"
+            step="0.01"
+            {...register('power_value', { valueAsNumber: true })}
+            className={`${styles.powerInput} ${errors.power_value ? styles.error : ''}`}
+          />
         </div>
 
-        <input
-          type="number"
-          step="0.01"
-          {...register('power_value', { valueAsNumber: true })}
+        {powerValue > 0 && (
+          <div className={styles.powerHint}>
+            {powerUnit === 'mw'
+              ? `${powerValue} МВт = ${powerValue * 1000} кВт`
+              : `${powerValue} кВт = ${(powerValue / 1000).toFixed(3)} МВт`}
+          </div>
+        )}
+        
+        {errors.power_value && (
+          <p className={styles.errorText}>{errors.power_value.message}</p>
+        )}
+      </div>
+
+      <div className={styles.formField}>
+        <label>Описание</label>
+        <textarea 
+          {...register('description')} 
+          rows={3}
+          placeholder="Дополнительная информация об объекте"
         />
+      </div>
 
-        <p>
-          {powerValue > 0 &&
-            (powerUnit === 'mw'
-              ? `${powerValue * 1000} кВт`
-              : `${(powerValue / 1000).toFixed(2)} МВт`)}
-        </p>
-
-        <textarea {...register('description')} />
-
+      <div className={styles.formActions}>
         <Button type="submit" loading={updateMutation.isPending}>
           Сохранить
         </Button>
-      </form>
-    </div>
-  );
+        <Button 
+          type="button" 
+          variant="secondary"
+          onClick={() => router.push('/admin/objects')}
+        >
+          Отмена
+        </Button>
+      </div>
+    </form>
+  </div>
+);
 }

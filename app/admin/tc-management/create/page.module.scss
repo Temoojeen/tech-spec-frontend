@@ -1,28 +1,23 @@
 .container {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #ffffff;
   padding: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 }
 
 .title {
-  font-size: 1.875rem;
-  font-weight: 600;
   color: #1a1f36;
-  margin: 0 0 2rem 0;
-  max-width: 1000px;
-  margin: 0 auto 2rem auto;
-  position: relative;
-  padding-bottom: 0.75rem;
+  font-size: 2.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 2rem 0;
   
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(90deg, #2563eb, #7c3aed);
-    border-radius: 2px;
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin: 1rem 0;
   }
 }
 
@@ -31,216 +26,36 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  font-size: 0.95rem;
-  color: #64748b;
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 32px;
-    height: 32px;
-    border: 2px solid #e2e8f0;
-    border-top-color: #2563eb;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    margin-top: 28px;
-  }
-}
-
-.form {
-  max-width: 1000px;
-  margin: 0 auto;
+  font-size: 1.5rem;
+  color: #4a5568;
   background: #ffffff;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9edf2;
-  overflow: hidden;
-  animation: fadeIn 0.3s ease-out;
-  padding: 2rem;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-.formGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.formField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  
-  label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  input, select, textarea {
-    padding: 0.625rem 0.875rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 0.95rem;
-    background: #f8fafc;
-    transition: all 0.15s ease;
-    width: 100%;
-    font-family: inherit;
-    
-    &:hover {
-      border-color: #cbd5e1;
-      background: #ffffff;
-    }
-    
-    &:focus {
-      outline: none;
-      border-color: #2563eb;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-  }
-  
-  select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1rem;
-    padding-right: 2.5rem;
-  }
-  
-  textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-  
-  input[type="date"] {
-    &::-webkit-calendar-picker-indicator {
-      opacity: 0.5;
-      cursor: pointer;
-      
-      &:hover {
-        opacity: 1;
-      }
-    }
-  }
-  
-  // Исправление для числового инпута
-    input[type="number"] {
-    -moz-appearance: textfield;
-    -webkit-appearance: textfield;  // Add for Chrome/Safari
-    appearance: textfield;          // Standard property
-    
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      appearance: none;              // Standard property
-      margin: 0;
-    }
-  }
-}
-
-.formFieldFull {
-  grid-column: span 2;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  
-  label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  textarea {
-    padding: 0.625rem 0.875rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 0.95rem;
-    background: #f8fafc;
-    transition: all 0.15s ease;
-    width: 100%;
-    font-family: inherit;
-    resize: vertical;
-    min-height: 100px;
-    
-    &:hover {
-      border-color: #cbd5e1;
-      background: #ffffff;
-    }
-    
-    &:focus {
-      outline: none;
-      border-color: #2563eb;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-  }
-}
-
-.errorText {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.75rem;
-  color: #e53e3e;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .serverError {
-  max-width: 1000px;
-  margin: 0 auto 1rem auto;
-  padding: 0.875rem 1rem;
+  max-width: 900px;
+  margin: 1rem auto 2rem;
+  padding: 1rem 1.5rem;
   background: #fff5f5;
-  border: 1px solid #feb2b2;
-  border-radius: 0.5rem;
   color: #c53030;
-  font-size: 0.875rem;
-  animation: shake 0.5s ease-out;
+  border-radius: 12px;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #c53030;
+  border: 1px solid #feb2b2;
+  animation: slideDown 0.3s ease-out;
 }
 
-.formActions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e9edf2;
-  
-  a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #4b5565;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-    cursor: pointer;
-    
-    &:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-      color: #1a1f36;
-    }
-    
-    &:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-  }
-}
-
-// Анимации
-@keyframes fadeIn {
+@keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
@@ -248,144 +63,274 @@
   }
 }
 
-@keyframes spin {
+.form {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #edf2f7;
+  overflow: hidden;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
   to {
-    transform: translate(-50%, -50%) rotate(360deg);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-  20%, 40%, 60%, 80% { transform: translateX(2px); }
-}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  padding: 2.5rem;
 
-// Адаптивность
-@media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-  
-  .title {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    
-    &::after {
-      width: 60px;
-    }
-  }
-  
-  .form {
-    padding: 1.5rem;
-  }
-  
-  .formGrid {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    padding: 1.5rem;
     gap: 1rem;
   }
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
   
-  .formFieldFull {
-    grid-column: span 1;
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
+
+  input, select, textarea {
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #1a202c;
+    width: 90%;
+    font-family: inherit;
+
+    &:hover {
+      border-color: #cbd5e0;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    }
+
+    &::placeholder {
+      color: #a0aec0;
+    }
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.2rem;
+    padding-right: 2.5rem;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+}
+
+.formFieldFull {
+  composes: formField;
+  grid-column: 1 / -1;
+}
+
+.errorText {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #e53e3e;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   
-  .formActions {
+  &::before {
+    content: "⚠️";
+    font-size: 0.9rem;
+  }
+}
+
+.formActions {
+  padding: 2rem 2.5rem;
+  background: #f7fafc;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-top: 2px solid #edf2f7;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
     flex-direction: column-reverse;
+    gap: 1rem;
+  }
+
+  button {
+    min-width: 200px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #3182ce;
+    color: white;
+    border: none;
     
-    button, a {
+    &:hover:not(:disabled) {
+      background: #2c5282;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(49, 130, 206, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
       width: 100%;
+      min-width: auto;
+    }
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 200px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #4a5568;
+    border: 2px solid #e2e8f0;
+    text-decoration: none;
+    text-align: center;
+    
+    &:hover {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+      transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+      width: 100%;
+      min-width: auto;
     }
   }
 }
 
-@media (max-width: 480px) {
-  .form {
-    padding: 1rem;
+// Стили для поля даты
+input[type="date"] {
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 0.2rem;
+    filter: invert(0.5);
+    
+    &:hover {
+      filter: invert(0.3);
+    }
   }
 }
 
-// Темная тема (опционально)
-@media (prefers-color-scheme: light) {
-  .container {
-    background: #1a1f36;
+// Стили для числового поля
+input[type="number"] {
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    opacity: 0.5;
+    
+    &:hover {
+      opacity: 1;
+    }
   }
+}
+
+// Стили для успешной валидации
+.validInput {
+  border-color: #48bb78 !important;
   
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1) !important;
+  }
+}
+
+// Адаптивные стили
+@media (max-width: 480px) {
   .title {
-    color: #ffffff;
+    font-size: 1.75rem;
   }
   
   .form {
-    background: #2d3748;
-    border-color: #4a5568;
+    border-radius: 16px;
   }
   
-  .formField, .formFieldFull {
+  .formField {
     label {
-      color: #e2e8f0;
+      font-size: 0.8rem;
     }
     
     input, select, textarea {
-      background: #1a202c;
-      border-color: #4a5568;
-      color: #ffffff;
-      
-      &:hover {
-        background: #2d3748;
-      }
-      
-      &:focus {
-        background: #2d3748;
-      }
+      padding: 0.75rem;
+      font-size: 0.95rem;
     }
-    
-    select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    }
-    
-    input[type="date"] {
-      &::-webkit-calendar-picker-indicator {
-        filter: invert(1);
-      }
-    }
-    
-    // Исправление для числового инпута в темной теме
-      // Исправление для числового инпута в темной теме
-    input[type="number"] {
-      -moz-appearance: textfield;
-      -webkit-appearance: textfield;  // Add for Chrome/Safari
-      appearance: textfield;          // Standard property
-      
-      &::-webkit-outer-spin-button,
-      &::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        appearance: none;              // Standard property
-        margin: 0;
-      }
-    }
-  
   }
-  
-  .errorText {
-    color: #fc8181;
+}
+
+// Анимация для появления элементов
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  .serverError {
-    background: #2d3748;
-    border-color: #fc8181;
-    color: #fc8181;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
+
+.formField {
+  animation: slideIn 0.3s ease-out;
+}
+
+// Стили для подсказок
+.hint {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 0.25rem;
   
-  .formActions {
-    border-color: #4a5568;
-    
-    a {
-      background: #2d3748;
-      border-color: #4a5568;
-      color: #e2e8f0;
-      
-      &:hover {
-        background: #374151;
-        color: #ffffff;
-      }
-    }
+  &::before {
+    content: "💡";
+    margin-right: 0.25rem;
+    font-size: 0.8rem;
   }
 }

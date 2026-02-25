@@ -121,7 +121,7 @@ export default function CreateUserPage() {
       <Header />
       <div className={styles.header}>
         <h1 className={styles.title}>Создание нового пользователя</h1>
-        <Link href="/admin/users" className={styles.backLink}>← к списку пользователей</Link>
+        <Link href="/admin/users" className={styles.backLink}> к списку пользователей</Link>
       </div>
 
       {serverError && <div className={styles.serverError}>{serverError}</div>}

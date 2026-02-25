@@ -47,6 +47,7 @@ export default function TCManagementPage() {
 
   const filteredTCs = technicalConditions?.filter(tc => 
     tc.organization_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tc.object_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tc.tc_number?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -69,7 +70,7 @@ export default function TCManagementPage() {
         <div className={styles.searchBar}>
           <input
             type="text"
-            placeholder="Поиск по организации или номеру ТУ..."
+            placeholder="Поиск по организации, номеру ТУ или объекту..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={styles.searchInput}
@@ -107,6 +108,7 @@ export default function TCManagementPage() {
               <th className={styles.th}>Организация</th>
               <th className={styles.th}>Тип ресурса</th>
               <th className={styles.th}>Тип ТУ</th>
+              <th className={styles.th}> Объект</th>
               <th className={styles.th}>Номер ТУ</th>
               <th className={styles.th}>Мощность</th>
               <th className={styles.th}>Дата выдачи</th>
@@ -131,6 +133,7 @@ export default function TCManagementPage() {
                     {tc.resource_type === 'electricity' ? '⚡ ЭЭ' : '💧 Вода'}
                   </td>
                   <td className={styles.td}>{formatTCType(tc.tc_type)}</td>
+                  <td className={styles.td}>{tc.object_name}</td>
                   <td className={styles.td}>{tc.tc_number}</td>
                   <td className={styles.td}>
                     {formatPower(tc.power_amount, tc.resource_type)}
