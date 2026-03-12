@@ -1,0 +1,225 @@
+.sidebar {
+  width: 300px;
+  min-height: 100vh;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  box-shadow: 5px 0 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* ---------- SECTIONS ---------- */
+
+.top_section,
+.bottom_section {
+  width: 100%;
+  height: 45vh;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* слой с движущимся фоном */
+
+.scrolling_bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 200%;
+  background-image: url('/assets/images/img.jpg');
+  background-size: cover;
+  background-repeat: repeat-y;
+  animation: scrollBackground 20s linear infinite;
+}
+
+/* нижняя часть медленнее */
+
+.bottom_section .scrolling_bg {
+  animation-duration: 25s;
+}
+
+/* ---------- ANIMATION ---------- */
+
+@keyframes scrollBackground {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+/* ---------- MIDDLE SECTION ---------- */
+
+.middle_section {
+  width: 100%;
+  height: 10vh;
+  min-height: 80px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 2;
+}
+
+.brand {
+  text-align: center;
+}
+
+.brand h3 {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.brand h2 {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: transform 0.3s ease;
+}
+
+.brand:hover h2 {
+  transform: scale(1.05);
+}
+
+/* ---------- HOVER PAUSE ---------- */
+
+.sidebar:hover .scrolling_bg {
+  animation-play-state: paused;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .brand h2 {
+    font-size: 20px;
+  }
+
+  .brand h3 {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  }
+
+  .top_section,
+  .bottom_section {
+    width: 35%;
+    height: 150px;
+    min-height: auto;
+  }
+
+  .middle_section {
+    width: 30%;
+    height: 150px;
+    min-height: auto;
+    padding: 15px;
+  }
+
+  .top_section .scrolling_bg {
+    animation-duration: 15s;
+  }
+
+  .bottom_section .scrolling_bg {
+    animation-duration: 18s;
+  }
+
+  .brand h3 {
+    font-size: 12px;
+  }
+
+  .brand h2 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .sidebar {
+    flex-direction: column;
+  }
+
+  .top_section,
+  .bottom_section {
+    width: 100%;
+    height: 25vh;
+  }
+
+  .middle_section {
+    width: 100%;
+    height: 15vh;
+    min-height: 100px;
+  }
+
+  .top_section .scrolling_bg {
+    animation-duration: 12s;
+  }
+
+  .bottom_section .scrolling_bg {
+    animation-duration: 15s;
+  }
+
+  .brand h2 {
+    font-size: 20px;
+  }
+
+  .brand h3 {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .top_section,
+  .bottom_section {
+    height: 20vh;
+  }
+
+  .middle_section {
+    height: 12vh;
+    min-height: 80px;
+    padding: 10px;
+  }
+
+  .top_section .scrolling_bg {
+    animation-duration: 10s;
+  }
+
+  .bottom_section .scrolling_bg {
+    animation-duration: 12s;
+  }
+
+  .brand h2 {
+    font-size: 18px;
+  }
+
+  .brand h3 {
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+}

@@ -1,213 +1,420 @@
-/* app/dashboard/page.module.scss */
+// dashboard/page.module.scss
 
-/*=============== GOOGLE FONTS ===============*/
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
-
-/*=============== VARIABLES ===============*/
-:global(:root) {
-  --total-color: #2563eb;   /* всего */
-  --free-color: #16a34a;    /* свободно */
-  --used-color: #dc2626;    /* выдано */
-
-  --title-color: #111827;
-  --text-color: #374151;
-  --muted: #6b7280;
-
-  --body-bg: #f3f4f6;
-  --card-bg: #ffffff;
-  --border: #e5e7eb;
-
-  --font: "Poppins", sans-serif;
-}
-
-/*=============== BASE ===============*/
-:global(*) {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-:global(body) {
-  font-family: var(--font);
-  background: var(--body-bg);
-  color: var(--text-color);
-}
-
-/*=============== LOADING ===============*/
-.loadingContainer {
+.dashboardLayout {
   min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.main {
+  margin-left: 280px; // Отступ для SideBar
+  padding: 2rem;
+  padding-top: 80px; // Отступ для Header
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding: 1rem;
+    padding-top: 70px;
+  }
+}
+
+// Заголовок и статистика
+.header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
-.loading {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--total-color);
-}
-
-/*=============== DASHBOARD GRID ===============*/
-.dashboard {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  place-items: center;
-  gap: 50px;
-  margin: 32px 0;
-}
-
-/*=============== OBJECT CARD ===============*/
-.generalStatistics {
-  background: var(--card-bg);
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid var(--border);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/*=============== HEADER ===============*/
-.statisticsHeader {
-  font-size: 18px;
+.title {
+  font-size: 2rem;
   font-weight: 600;
-  color: var(--title-color);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
+  color: #111827;
+  margin: 0;
+
+  @media (max-width: 640px) {
+    font-size: 1.5rem;
+  }
 }
 
-/*=============== STATS GRID ===============*/
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+.statsSummary {
+  display: flex;
+  gap: 1.5rem;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: space-around;
+    padding: 0.75rem;
+  }
 }
 
-/*=============== STAT CARD ===============*/
-.statWrapper {
-  background: #f9fafb;
-  border-radius: 14px;
-  padding: 16px;
+.statCard {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  border: 1px solid var(--border);
+  align-items: center;
+  min-width: 80px;
+
+  .statValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2563eb;
+    line-height: 1.2;
+
+    @media (max-width: 640px) {
+      font-size: 1.25rem;
+    }
+  }
+
+  .statLabel {
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+  }
 }
 
-/*=============== NUMBER ===============*/
-.statItem {
+// Секции
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.objectsSection {
+  margin-bottom: 3rem;
+}
+
+.navigationSection {
+  margin-top: 3rem;
+}
+
+// Сетка объектов
+.objectsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+// Карточка объекта
+.objectCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+}
+
+.objectHeader {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-right: 2rem;
 }
 
-.digit {
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1;
+.objectIcon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border-radius: 10px;
 }
 
-.unit {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--muted);
+.objectName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/*=============== LABEL ===============*/
-.label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-/*=============== COLOR SEMANTICS ===============*/
-.total {
-  color: var(--total-color);
-}
-
-.free {
-  color: var(--free-color);
-}
-
-.used {
-  color: var(--used-color);
-}
-
-/*=============== PROGRESS BAR ===============*/
-.progressBar {
-  height: 10px;
+.objectType {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
   background: #e5e7eb;
-  border-radius: 999px;
+  color: #4b5563;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.objectStats {
+  margin-bottom: 1.25rem;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed #f3f4f6;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.statName {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.statValue {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+
+  &.freePower {
+    color: #10b981;
+    font-weight: 600;
+  }
+}
+
+.tcStats {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.tcBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  color: #4b5563;
+  border-radius: 9999px;
+
+  &.activeBadge {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+}
+
+// Прогресс бар
+.progressSection {
+  margin-top: 1rem;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progressLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.progressPercent {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.progressBar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 9999px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  border-radius: 999px;
-  transition: width 0.4s ease;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
 }
 
-/*=============== CARD LINKS (BOTTOM BLOCK) ===============*/
-.container {
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
-
-.card__container {
-  display: grid;
-  gap: 32px;
-}
-
-/*=============== IMAGE CARD ===============*/
-.card__article {
-  position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.card__img {
-  width: 500px;
-  height: 350px;
-  object-fit: cover;
-  border-radius: 18px;
-}
-
-/*=============== HOVER DATA ===============*/
-.card__data {
+// Бейдж ресурса
+.resourceBadge {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
-}
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.25rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
 
-.card__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--title-color);
-}
-
-.card__description {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-/*=============== RESPONSIVE ===============*/
-@media (min-width: 768px) {
-  .card__container {
-    grid-template-columns: repeat(2, 1fr);
+  .objectCard:hover & {
+    opacity: 1;
   }
 }
 
-@media (min-width: 1120px) {
-  .card__container {
-    grid-template-columns: repeat(3, 1fr);
+// Навигационные карточки
+.navCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.navCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    background: #f9fafb;
+  }
+}
+
+.navCardIcon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border-radius: 12px;
+}
+
+.navCardContent {
+  flex: 1;
+}
+
+.navCardTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.navCardDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+// Загрузка
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1rem;
+  background: #f9fafb;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Адаптивность
+@media (max-width: 768px) {
+  .objectsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .navCards {
+    grid-template-columns: 1fr;
+  }
+
+  .statsSummary {
+    width: 100%;
+    justify-content: space-around;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 0.75rem;
+    padding-top: 70px;
+  }
+
+  .objectCard {
+    padding: 1rem;
+  }
+
+  .objectHeader {
+    flex-wrap: wrap;
+  }
+
+  .objectType {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .statRow {
+    font-size: 0.75rem;
+  }
+
+  .statValue {
+    font-size: 0.875rem;
   }
 }

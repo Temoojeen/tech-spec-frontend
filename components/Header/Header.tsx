@@ -10,7 +10,7 @@ import styles from './Header.module.scss';
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   
-  useEffect(() => {
+  useEffect(() => {    
     const link = document.createElement('link');
     link.href = "https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap";
     link.rel = "stylesheet";
@@ -25,6 +25,7 @@ const Header = () => {
       window.removeEventListener('scroll', handleScroll);
       document.head.removeChild(link);
     };
+    
   }, []);
 
   const { user, isAuthenticated, loading, logout } = useAuth();
@@ -92,8 +93,12 @@ const Header = () => {
           </button>
         </div>
       </div>
-
-      <div className={styles.headerFooter}>Designed by Temoojeen</div>
+      {!pathname.startsWith("/dashboard") &&
+      <div className={styles.headerFooter}>
+        <p>
+          Designed by Temoojeen
+          </p>
+          </div>}
     </header>
   );
 };

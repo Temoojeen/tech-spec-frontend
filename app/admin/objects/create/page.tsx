@@ -27,10 +27,26 @@ interface ApiError {
 const objectSchema = z.object({
   name: z.string().min(2, 'Название должно содержать минимум 2 символа'),
   type: z.enum(['substation', 'tp', 'kru']),
-  power_unit: z.enum(['mw', 'kw']),
+  resource_type: z.enum(['electricity', 'water']),
   power_value: z.number().min(0.01, 'Мощность должна быть больше 0'),
+  power_unit: z.enum(['mw', 'kw', 'm3h', 'm3d']),
   description: z.string().optional(),
-});
+}).refine(
+  (data) => {
+    // Проверка соответствия единицы измерения типу ресурса
+    if (data.resource_type === 'electricity') {
+      return ['mw', 'kw'].includes(data.power_unit);
+    }
+    if (data.resource_type === 'water') {
+      return ['m3h', 'm3d'].includes(data.power_unit);
+    }
+    return true;
+  },
+  {
+    message: 'Неверная единица измерения для выбранного типа ресурса',
+    path: ['power_unit'],
+  }
+);
 
 // ===== Тип формы =====
 type ObjectFormData = z.infer<typeof objectSchema>;
@@ -39,10 +55,13 @@ type ObjectFormData = z.infer<typeof objectSchema>;
 interface CreateObjectRequest {
   name: string;
   type: 'substation' | 'tp' | 'kru';
-  max_power_mw: number;
-  max_power_kw: number;
+  resource_type: 'electricity' | 'water';
+  power_value: number;
+  power_unit: 'mw' | 'kw' | 'm3h' | 'm3d';
   description?: string;
 }
+
+// ===== Вспомогательные функции =====
 
 export default function CreateObjectPage() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -61,30 +80,25 @@ export default function CreateObjectPage() {
     defaultValues: {
       name: '',
       type: 'substation',
-      power_unit: 'mw',
+      resource_type: 'electricity',
       power_value: 0,
+      power_unit: 'mw',
       description: '',
     },
   });
 
-  // ===== useWatch вместо watch =====
-  const powerUnit = useWatch({
-    control,
-    name: 'power_unit',
-  });
+  // ===== useWatch для отслеживания изменений =====
+  const resourceType = useWatch({ control, name: 'resource_type' });
+  const powerUnit = useWatch({ control, name: 'power_unit' });
 
-
-  // ===== Конвертация мощности =====
-  const convertPower = (value: number, unit: 'mw' | 'kw') => {
-    return unit === 'mw'
-      ? {
-          max_power_mw: value,
-          max_power_kw: value * 1000,
-        }
-      : {
-          max_power_mw: value / 1000,
-          max_power_kw: value,
-        };
+  // Автоматически меняем единицу измерения при смене типа ресурса
+  const handleResourceTypeChange = (type: 'electricity' | 'water') => {
+    setValue('resource_type', type);
+    if (type === 'electricity') {
+      setValue('power_unit', 'mw');
+    } else {
+      setValue('power_unit', 'm3h');
+    }
   };
 
   // ===== Mutation =====
@@ -107,18 +121,7 @@ export default function CreateObjectPage() {
   // ===== Submit =====
   const onSubmit = (formData: ObjectFormData) => {
     setServerError(null);
-
-    const power = convertPower(formData.power_value, formData.power_unit);
-
-    const requestData: CreateObjectRequest = {
-      name: formData.name,
-      type: formData.type,
-      max_power_mw: power.max_power_mw,
-      max_power_kw: power.max_power_kw,
-      description: formData.description || undefined,
-    };
-
-    createMutation.mutate(requestData);
+    createMutation.mutate(formData);
   };
 
   // ===== Guards =====
@@ -133,7 +136,8 @@ export default function CreateObjectPage() {
   // ===== UI =====
   return (
     <div className={styles.container}>
-        <Header/>
+      <Header />
+      
       <div className={styles.header}>
         <h1 className={styles.title}>Создание нового объекта</h1>
         <Link href="/admin/objects" className={styles.backLink}>
@@ -166,7 +170,7 @@ export default function CreateObjectPage() {
             )}
           </div>
 
-          {/* Тип */}
+          {/* Тип объекта */}
           <div className={styles.formField}>
             <label className={styles.label}>
               Тип объекта <span className={styles.required}>*</span>
@@ -183,6 +187,34 @@ export default function CreateObjectPage() {
             </select>
           </div>
 
+          {/* Тип ресурса */}
+          <div className={styles.formField}>
+            <label className={styles.label}>
+              Тип ресурса <span className={styles.required}>*</span>
+            </label>
+            <div className={styles.resourceTypeButtons}>
+              <button
+                type="button"
+                className={`${styles.resourceButton} ${
+                  resourceType === 'electricity' ? styles.active : ''
+                }`}
+                onClick={() => handleResourceTypeChange('electricity')}
+              >
+                ⚡ Электроснабжение
+              </button>
+              <button
+                type="button"
+                className={`${styles.resourceButton} ${
+                  resourceType === 'water' ? styles.active : ''
+                }`}
+                onClick={() => handleResourceTypeChange('water')}
+              >
+                💧 Водоснабжение
+              </button>
+            </div>
+            <input type="hidden" {...register('resource_type')} />
+          </div>
+
           {/* Мощность */}
           <div className={styles.formFieldFull}>
             <label className={styles.label}>
@@ -191,39 +223,71 @@ export default function CreateObjectPage() {
 
             <div className={styles.powerInputGroup}>
               <div className={styles.powerUnitSelector}>
-                <button
-                  type="button"
-                  className={`${styles.unitButton} ${
-                    powerUnit === 'mw' ? styles.active : ''
-                  }`}
-                  onClick={() => setValue('power_unit', 'mw')}
-                >
-                  МВт
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.unitButton} ${
-                    powerUnit === 'kw' ? styles.active : ''
-                  }`}
-                  onClick={() => setValue('power_unit', 'kw')}
-                >
-                  кВт
-                </button>
+                {resourceType === 'electricity' ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.unitButton} ${
+                        powerUnit === 'mw' ? styles.active : ''
+                      }`}
+                      onClick={() => setValue('power_unit', 'mw')}
+                    >
+                      МВт
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.unitButton} ${
+                        powerUnit === 'kw' ? styles.active : ''
+                      }`}
+                      onClick={() => setValue('power_unit', 'kw')}
+                    >
+                      кВт
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.unitButton} ${
+                        powerUnit === 'm3h' ? styles.active : ''
+                      }`}
+                      onClick={() => setValue('power_unit', 'm3h')}
+                    >
+                      м³/ч
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.unitButton} ${
+                        powerUnit === 'm3d' ? styles.active : ''
+                      }`}
+                      onClick={() => setValue('power_unit', 'm3d')}
+                    >
+                      м³/сут
+                    </button>
+                  </>
+                )}
               </div>
 
               <input
                 type="number"
                 step="0.01"
+                min="0.01"
                 {...register('power_value', { valueAsNumber: true })}
                 className={`${styles.powerInput} ${
                   errors.power_value ? styles.error : ''
                 }`}
+                placeholder="0.00"
               />
             </div>
 
             {errors.power_value && (
               <p className={styles.errorText}>
                 {errors.power_value.message}
+              </p>
+            )}
+            {errors.power_unit && (
+              <p className={styles.errorText}>
+                {errors.power_unit.message}
               </p>
             )}
           </div>
@@ -235,6 +299,7 @@ export default function CreateObjectPage() {
               {...register('description')}
               rows={3}
               className={styles.textarea}
+              placeholder="Дополнительная информация об объекте"
             />
           </div>
         </div>
