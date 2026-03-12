@@ -213,9 +213,8 @@ export default function DashboardPage() {
               };
 
               return (
-                <Link
+                <div
                   key={stats.object.id}
-                  href={`/objects/${stats.object.id}`}
                   className={styles.objectCard}
                 >
                   <div className={styles.objectHeader}>
@@ -281,7 +280,7 @@ export default function DashboardPage() {
                   <div className={styles.resourceBadge}>
                     {stats.object.resource_type === 'electricity' ? '⚡' : '💧'}
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
