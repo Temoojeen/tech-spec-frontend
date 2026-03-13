@@ -6,13 +6,8 @@
   margin-bottom: 50px;
   position: sticky;
   top: 0;
-  z-index: 100;
-  background: rgba($white, 0.85);
-  backdrop-filter: blur(12px) saturate(180%);
-  border-bottom: 2px dashed black;
-  // padding: $spacing-3 0;
+  z-index: 102;
   transition: all 0.3s ease;
-
   &.scrolled {
     padding: $spacing-2 0;
     background: rgba($white, 0.95);
@@ -447,7 +442,7 @@
 // Светлая тема
 @media (prefers-color-scheme: light) {
   .header {
-    background: rgba($white, 0.85);
+    // background: rgba($white, 0.85);
     
     &.scrolled {
       background: rgba($white, 0.95);
