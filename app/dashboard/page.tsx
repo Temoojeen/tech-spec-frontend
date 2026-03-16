@@ -20,7 +20,6 @@ import Image from 'next/image';
 /* ===================== TYPES ===================== */
 
 // Определяем допустимые типы ресурсов
-type ResourceType = 'electricity' | 'water';
 type ObjectType = 'substation' | 'tp' | 'kru';
 
 interface ObjectStats {
@@ -57,11 +56,6 @@ interface ObjectTypeConfig {
   label: string;
 }
 
-interface ResourceTypeConfig {
-  icon: string;
-  label: string;
-  baseUnit: string;
-}
 
 type ChartData = {
   name: string;
@@ -94,10 +88,6 @@ const OBJECT_TYPE_CONFIG: Record<ObjectType, ObjectTypeConfig> = {
   },
 };
 
-const RESOURCE_TYPE_CONFIG: Record<ResourceType, ResourceTypeConfig> = {
-  electricity: { icon: '⚡', label: 'Электричество', baseUnit: 'кВт' },
-  water: { icon: '💧', label: 'Вода', baseUnit: 'м³/ч' },
-};
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -447,7 +437,6 @@ export default function DashboardPage() {
               {filteredStats.map(stats => {
                 // Безопасное приведение типов
                 const objectType = stats.object.type as ObjectType;
-                const resourceType = stats.object.resource_type as ResourceType;
                 
                 const config = OBJECT_TYPE_CONFIG[objectType] || {
                   icon: '📦',
@@ -545,9 +534,6 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className={styles.resourceBadge}>
-                        {RESOURCE_TYPE_CONFIG[resourceType]?.icon || '📦'}
-                      </div>
                     </div>
                   </Link>
                 );
