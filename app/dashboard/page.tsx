@@ -11,7 +11,7 @@ import {
 
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
-import { TechnicalCondition, PowerObject } from '@/types';
+import { TechnicalCondition, PowerObject, Organization } from '@/types';
 import Header from '@/components/Header/Header';
 import styles from './page.module.scss';
 import SideBar from '@/components/SideBar/SideBar';
@@ -19,23 +19,22 @@ import Image from 'next/image';
 
 /* ===================== TYPES ===================== */
 
-// Определяем допустимые типы ресурсов
 type ObjectType = 'substation' | 'tp' | 'kru';
 
 interface ObjectStats {
   object: PowerObject;
-  issuedPower: number;        // Выданная мощность в базовых единицах (кВт или м³/ч)
-  issuedPowerUnit: string;    // Единица измерения выданной мощности
-  freePower: number;          // Свободная мощность
-  freePowerUnit: string;      // Единица измерения свободной мощности
-  totalPower: number;         // Общая мощность в удобных единицах
-  totalPowerUnit: string;     // Единица общей мощности
-  usagePercent: number;       // Процент загрузки
-  totalTC: number;            // Всего ТУ
-  activeTC: number;           // Активных ТУ
-  totalCells: number;         // Всего ячеек (для ТП/КРУ)
-  occupiedCells: number;      // Занятых ячеек
-  availableCells: number;     // Свободных ячеек
+  issuedPower: number;
+  issuedPowerUnit: string;
+  freePower: number;
+  freePowerUnit: string;
+  totalPower: number;
+  totalPowerUnit: string;
+  usagePercent: number;
+  totalTC: number;
+  activeTC: number;
+  totalCells: number;
+  occupiedCells: number;
+  availableCells: number;
 }
 
 interface DashboardStats {
@@ -56,6 +55,11 @@ interface ObjectTypeConfig {
   label: string;
 }
 
+interface ExpiringTC extends TechnicalCondition {
+  organization_name: string;
+  object_name: string;
+  daysLeft: number;
+}
 
 type ChartData = {
   name: string;
@@ -88,7 +92,6 @@ const OBJECT_TYPE_CONFIG: Record<ObjectType, ObjectTypeConfig> = {
   },
 };
 
-
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 /* ===================== PAGE ===================== */
@@ -101,6 +104,7 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterResource, setFilterResource] = useState<string>('all');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   /* ---------- QUERIES ---------- */
   const { 
@@ -131,6 +135,20 @@ export default function DashboardPage() {
     enabled: isAuthenticated,
   });
 
+  const { data: organizationsMap } = useQuery({
+    queryKey: ['organizations-map'],
+    queryFn: async () => {
+      try {
+        const res = await api.get<Organization[]>('/organizations/');
+        return new Map(res.data.map(org => [org.id, org.name]));
+      } catch (error) {
+        console.error('Ошибка загрузки организаций:', error);
+        return new Map<number, string>();
+      }
+    },
+    enabled: isAuthenticated,
+  });
+
   /* ---------- AUTH REDIRECT ---------- */
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -146,7 +164,6 @@ export default function DashboardPage() {
     let issuedPowerUnit = '';
 
     if (object.resource_type === 'electricity') {
-      // Для электричества базовая единица - кВт
       issuedPower = activeTCs.reduce((sum, tc) => {
         if (tc.power_unit === 'mw') {
           return sum + (tc.power_amount || 0) * 1000;
@@ -156,7 +173,6 @@ export default function DashboardPage() {
       
       totalPower = object.max_power_electricity_kw || 0;
       
-      // Определяем удобные единицы для отображения
       if (totalPower >= 1000) {
         totalPowerUnit = 'МВт';
         totalPower = object.max_power_electricity_mw || 0;
@@ -167,7 +183,6 @@ export default function DashboardPage() {
         issuedPowerUnit = 'кВт';
       }
     } else {
-      // Для воды базовая единица - м³/ч
       issuedPower = activeTCs.reduce((sum, tc) => {
         if (tc.power_unit === 'm3d') {
           return sum + (tc.power_amount || 0) / 24;
@@ -222,6 +237,42 @@ export default function DashboardPage() {
       });
   }, [objects, allTCs, calculatePowerStats, calculateCellStats]);
 
+  // НОВОЕ: Истекающие ТУ
+  const expiringTCs = useMemo<ExpiringTC[]>(() => {
+    if (!allTCs || !organizationsMap || !objects) return [];
+
+    const today = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(today.getDate() + 3);
+
+    return allTCs
+      .filter(tc => 
+        tc.tc_type === 'temporary' && 
+        tc.status === 'active' && 
+        tc.expiry_date
+      )
+      .map(tc => {
+        const expiryDate = new Date(tc.expiry_date!);
+        const daysLeft = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Находим название организации
+        const organizationName = organizationsMap.get(tc.organization_id) || 'Неизвестно';
+        
+        // Находим название объекта
+        const object = objects.find(obj => obj.id === tc.object_id);
+        const objectName = object?.name || `ID: ${tc.object_id}`;
+
+        return {
+          ...tc,
+          organization_name: organizationName,
+          object_name: objectName,
+          daysLeft,
+        };
+      })
+      .filter(tc => tc.daysLeft <= 3 && tc.daysLeft >= 0)
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [allTCs, organizationsMap, objects]);
+
   // Фильтрованные объекты
   const filteredStats = useMemo(() => {
     return objectStats.filter(stat => {
@@ -259,7 +310,6 @@ export default function DashboardPage() {
     };
   }, [filteredStats]);
 
-
   /* ---------- RESET FILTERS ---------- */
   const resetFilters = useCallback(() => {
     setSearchTerm('');
@@ -288,19 +338,6 @@ export default function DashboardPage() {
       value: count,
     }));
   }, [filteredStats]);
-
-  // const resourceData = useMemo<TypeData[]>(() => {
-  //   const counts = filteredStats.reduce((acc, stat) => {
-  //     const resource = stat.object.resource_type as ResourceType;
-  //     acc[resource] = (acc[resource] || 0) + 1;
-  //     return acc;
-  //   }, {} as Record<ResourceType, number>);
-
-  //   return Object.entries(counts).map(([resource, count]) => ({
-  //     name: RESOURCE_TYPE_CONFIG[resource as ResourceType]?.label || resource,
-  //     value: count,
-  //   }));
-  // }, [filteredStats]);
 
   /* ---------- LOADING STATES ---------- */
   if (loading || objectsLoading || tcLoading) {
@@ -341,11 +378,59 @@ export default function DashboardPage() {
       <SideBar />
       
       <main className={styles.main}>
-        {/* Заголовок */}
+        {/* Заголовок с уведомлениями */}
         <div className={styles.header}>
           <div className={styles.titleSection}>
             <h1 className={styles.title}>Обзорная страница</h1>
             
+            {/* НОВОЕ: Иконка уведомлений */}
+            {expiringTCs.length > 0 && (
+              <div className={styles.notificationWrapper}>
+                <button 
+                  className={styles.notificationIcon}
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  🔔
+                  <span className={styles.notificationBadge}>{expiringTCs.length}</span>
+                </button>
+                
+                {/* НОВОЕ: Выпадающее меню уведомлений */}
+                {showNotifications && (
+                  <div className={styles.notificationDropdown}>
+                    <div className={styles.notificationHeader}>
+                      <h3>Истекающие ТУ</h3>
+                      <button onClick={() => setShowNotifications(false)}>✕</button>
+                    </div>
+                    <div className={styles.notificationList}>
+                      {expiringTCs.map(tc => (
+                        <Link 
+                          key={tc.id}
+                          href={`/admin/tc-management/${tc.id}/edit`}
+                          className={styles.notificationItem}
+                          onClick={() => setShowNotifications(false)}
+                        >
+                          <div className={styles.notificationItemHeader}>
+                            <span className={styles.notificationItemOrg}>
+                              {tc.organization_name}
+                            </span>
+                            <span className={`${styles.notificationItemDays} ${
+                              tc.daysLeft === 0 ? styles.expired : 
+                              tc.daysLeft === 1 ? styles.urgent : ''
+                            }`}>
+                              {tc.daysLeft === 0 ? 'Сегодня' : `${tc.daysLeft} дн.`}
+                            </span>
+                          </div>
+                          <div className={styles.notificationItemDetails}>
+                            <span>ТУ №{tc.tc_number}</span>
+                            <span>{tc.object_name}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           {totalStats && (
@@ -374,6 +459,24 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* НОВОЕ: Баннер срочных уведомлений (альтернативный вариант) */}
+        {expiringTCs.length > 0 && (
+          <div className={styles.expiringBanner}>
+            <div className={styles.expiringBannerContent}>
+              <span className={styles.expiringBannerIcon}>⚠️</span>
+              <div className={styles.expiringBannerText}>
+                <strong>Внимание!</strong> {expiringTCs.length} временных ТУ истекают в ближайшие 3 дня
+              </div>
+              <button 
+                className={styles.expiringBannerButton}
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                Показать детали
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Поиск и фильтры */}
         <div className={styles.filtersSection}>
@@ -435,7 +538,6 @@ export default function DashboardPage() {
           ) : (
             <div className={styles.objectsGrid}>
               {filteredStats.map(stats => {
-                // Безопасное приведение типов
                 const objectType = stats.object.type as ObjectType;
                 
                 const config = OBJECT_TYPE_CONFIG[objectType] || {
@@ -486,7 +588,6 @@ export default function DashboardPage() {
                           </span>
                         </div>
 
-                        {/* Информация о ячейках для ТП/КРУ */}
                         {stats.object.type !== 'substation' && (
                           <div className={styles.statRow}>
                             <span className={styles.statName}>Ячейки:</span>
@@ -533,7 +634,6 @@ export default function DashboardPage() {
                           />
                         </div>
                       </div>
-
                     </div>
                   </Link>
                 );
@@ -542,29 +642,30 @@ export default function DashboardPage() {
           )}
         </div>
 
-       <div className={styles.navigationSection}>
-  <div className={styles.navCards}>
-    <Link href="/electricity" className={styles.navCard}>
-      <Image 
-        width={300} 
-        height={300} 
-        src="https://ovikv.ru/new/img/proek393/06.jpg" 
-        alt="Электроснабжение"
-      />
-      <span>Электроснабжение</span>
-    </Link>
-    
-    <Link href="/water" className={styles.navCard}>
-      <Image 
-        width={300} 
-        height={300} 
-        src="https://thumbs.dreamstime.com/z/selfie-shots-family-couples-vector-detailed-character-proffesional-plumber-men-set-plumber-repair-professional-plumber-fixing-72189579.jpg" 
-        alt="Водоснабжение"
-      />
-      <span>Водоснабжение</span>
-    </Link>
-  </div>
-</div>
+        <div className={styles.navigationSection}>
+          <div className={styles.navCards}>
+            <Link href="/electricity" className={styles.navCard}>
+              <Image 
+                width={300} 
+                height={300} 
+                src="https://ovikv.ru/new/img/proek393/06.jpg" 
+                alt="Электроснабжение"
+              />
+              <span>Электроснабжение</span>
+            </Link>
+            
+            <Link href="/water" className={styles.navCard}>
+              <Image 
+                width={300} 
+                height={300} 
+                src="https://thumbs.dreamstime.com/z/selfie-shots-family-couples-vector-detailed-character-proffesional-plumber-men-set-plumber-repair-professional-plumber-fixing-72189579.jpg" 
+                alt="Водоснабжение"
+              />
+              <span>Водоснабжение</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Графики */}
         {filteredStats.length > 0 && (
           <div className={styles.chartsSection}>
@@ -595,100 +696,68 @@ export default function DashboardPage() {
                 <h3>Распределение по типам</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
-  <Pie
-    data={typeData}
-    cx="50%"
-    cy="50%"
-    labelLine={false}
-    label={({ name, percent }) =>
-      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-    }
-    outerRadius={80}
-    fill="#8884d8"
-    dataKey="value"
-  >
-    {typeData.map((entry, index) => (
-      <Cell
-        key={`cell-${index}`}
-        fill={CHART_COLORS[index % CHART_COLORS.length]}
-      />
-    ))}
-  </Pie>
-
-  <Tooltip />
-</PieChart>
+                    <Pie
+                      data={typeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) =>
+                        `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                      }
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {typeData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
-
-              {/* <div className={styles.chartCard}>
-                <h3>Распределение по ресурсам</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-  <Pie
-    data={resourceData}
-    cx="50%"
-    cy="50%"
-    labelLine={false}
-    label={({ name, percent }) =>
-      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-    }
-    outerRadius={80}
-    fill="#8884d8"
-    dataKey="value"
-  >
-    {resourceData.map((entry, index) => (
-      <Cell
-        key={`cell-${index}`}
-        fill={CHART_COLORS[(index + 2) % CHART_COLORS.length]}
-      />
-    ))}
-  </Pie>
-
-  <Tooltip />
-</PieChart>
-                </ResponsiveContainer>
-              </div> */}
             </div>
           </div>
         )}
 
+        {/* Навигационные карточки для админа */}
+        {isAdmin && (
+          <div className={styles.navigationSection}>
+            <h2 className={styles.sectionTitle}>Быстрый переход</h2>
+            <div className={styles.navCards}>
+              <Link href="/admin/objects" className={styles.navCard}>
+                <div className={styles.navCardIcon}>🏭</div>
+                <div className={styles.navCardContent}>
+                  <h3 className={styles.navCardTitle}>Объекты</h3>
+                  <p className={styles.navCardDescription}>
+                    Управление подстанциями, ТП и КРУ
+                  </p>
+                </div>
+              </Link>
 
-        {/* Навигационные карточки */}
-        {isAdmin &&
-        <div className={styles.navigationSection}>
-          <h2 className={styles.sectionTitle}>Быстрый переход</h2>
-          <div className={styles.navCards}>
-            <Link href="/admin/objects" className={styles.navCard}>
-              <div className={styles.navCardIcon}>🏭</div>
-              <div className={styles.navCardContent}>
-                <h3 className={styles.navCardTitle}>Объекты</h3>
-                <p className={styles.navCardDescription}>
-                  Управление подстанциями, ТП и КРУ
-                </p>
-              </div>
-            </Link>
+              <Link href="/admin/tc-management" className={styles.navCard}>
+                <div className={styles.navCardIcon}>📋</div>
+                <div className={styles.navCardContent}>
+                  <h3 className={styles.navCardTitle}>Технические условия</h3>
+                  <p className={styles.navCardDescription}>
+                    Управление ТУ на подключение
+                  </p>
+                </div>
+              </Link>
 
-            <Link href="/admin/tc-management" className={styles.navCard}>
-              <div className={styles.navCardIcon}>📋</div>
-              <div className={styles.navCardContent}>
-                <h3 className={styles.navCardTitle}>Технические условия</h3>
-                <p className={styles.navCardDescription}>
-                  Управление ТУ на подключение
-                </p>
-              </div>
-            </Link>
+              <Link href="/admin/organizations" className={styles.navCard}>
+                <div className={styles.navCardIcon}>🏢</div>
+                <div className={styles.navCardContent}>
+                  <h3 className={styles.navCardTitle}>Организации</h3>
+                  <p className={styles.navCardDescription}>
+                    Управление организациями-заявителями
+                  </p>
+                </div>
+              </Link>
 
-            <Link href="/admin/organizations" className={styles.navCard}>
-              <div className={styles.navCardIcon}>🏢</div>
-              <div className={styles.navCardContent}>
-                <h3 className={styles.navCardTitle}>Организации</h3>
-                <p className={styles.navCardDescription}>
-                  Управление организациями-заявителями
-                </p>
-              </div>
-            </Link>
-
-            {isAdmin && (
               <Link href="/admin/users" className={styles.navCard}>
                 <div className={styles.navCardIcon}>👥</div>
                 <div className={styles.navCardContent}>
@@ -698,9 +767,9 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </Link>
-            )}
+            </div>
           </div>
-        </div>}
+        )}
       </main>
     </div>
   );

@@ -1,198 +1,322 @@
 .dashboardLayout {
   min-height: 100vh;
-  background-color: #f3f4f6;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
 }
 
 .main {
-  margin-left: 250px;
-  padding: 80px 24px 24px;
+  flex: 1;
+  padding: 24px 32px;
+  margin-left: 280px; // Отступ для SideBar
+  transition: margin-left 0.3s ease;
+  max-width: calc(100% - 280px);
 }
 
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background-color: #f3f4f6;
-  
-  p {
-    margin-top: 16px;
-    color: #6b7280;
-    font-size: 16px;
-  }
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.errorContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background-color: #f3f4f6;
-  text-align: center;
-  padding: 0 20px;
-
-  .errorIcon {
-    font-size: 48px;
-    margin-bottom: 16px;
-  }
-
-  h2 {
-    color: #1f2937;
-    margin-bottom: 8px;
-  }
-
-  p {
-    color: #6b7280;
-    margin-bottom: 24px;
-  }
-}
-
-.retryButton {
-  padding: 10px 20px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #2563eb;
-  }
-}
-
+/* Шапка */
 .header {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .titleSection {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 16px;
+  position: relative;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
-  color: #1f2937;
+  color: #0f172a;
+  margin: 0;
 }
 
-.exportButton {
-  padding: 8px 16px;
-  background-color: #10b981;
+/* Уведомления */
+.notificationWrapper {
+  position: relative;
+}
+
+.notificationIcon {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 40px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    transform: scale(1.05);
+  }
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
   color: white;
-  border: none;
-  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid white;
+}
+
+.notificationDropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 400px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.notificationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #64748b;
+    padding: 4px;
+
+    &:hover {
+      color: #0f172a;
+    }
+  }
+}
+
+.notificationList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notificationItem {
+  display: block;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.notificationItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notificationItemOrg {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.notificationItemDays {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #fef9c3;
+  color: #854d0e;
+
+  &.urgent {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &.expired {
+    background: #dc2626;
+    color: white;
+  }
+}
+
+.notificationItemDetails {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: #64748b;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+/* Баннер уведомлений */
+.expiringBanner {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.expiringBannerContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.expiringBannerIcon {
+  font-size: 24px;
+}
+
+.expiringBannerText {
+  flex: 1;
+  font-size: 15px;
+  color: #92400e;
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.expiringBannerButton {
+  background: white;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
+  color: #92400e;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 
-  &:hover:not(:disabled) {
-    background-color: #059669;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  &:hover {
+    background: #fef9c3;
+    border-color: #fbbf24;
   }
 }
 
+/* Статистика */
 .statsSummary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .statCard {
-  padding: 16px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.statValue {
-  display: block;
-  font-size: 28px;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.2;
-}
-
-.statLabel {
-  display: block;
-  font-size: 14px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-.statDetail {
-  display: block;
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 2px;
-}
-
-.filtersSection {
   background: white;
   border-radius: 12px;
   padding: 16px 20px;
-  margin-bottom: 24px;
+  min-width: 150px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  display: block;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.statDetail {
+  font-size: 11px;
+  color: #94a3b8;
+  display: block;
+}
+
+/* Фильтры */
+.filtersSection {
+  margin-bottom: 24px;
 }
 
 .filters {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .searchInput {
   flex: 1;
   min-width: 250px;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 
   &:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
+
+  &::placeholder {
+    color: #94a3b8;
+  }
 }
 
 .filterSelect {
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 14px;
-  background-color: white;
-  cursor: pointer;
+  background: white;
   min-width: 150px;
+  cursor: pointer;
+  transition: all 0.2s;
 
   &:focus {
     outline: none;
@@ -202,53 +326,29 @@
 
 .resetButton {
   padding: 10px 16px;
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  color: #475569;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 
   &:hover {
-    background-color: #dc2626;
+    background: #e2e8f0;
   }
 }
 
-.chartsSection {
-  margin-bottom: 32px;
+/* Секция объектов */
+.objectsSection {
+  margin-bottom: 40px;
 }
 
 .sectionTitle {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 16px;
-}
-
-.chartsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
-}
-
-.chartCard {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-  h3 {
-    font-size: 16px;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 16px;
-  }
-}
-
-.objectsSection {
-  margin-bottom: 32px;
+  color: #0f172a;
+  margin-bottom: 20px;
 }
 
 .objectsGrid {
@@ -268,20 +368,22 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
+  transition: all 0.3s ease;
   border-top: 4px solid transparent;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   }
 }
 
 .objectHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 16px;
 }
 
@@ -292,107 +394,119 @@
 }
 
 .objectIcon {
-  font-size: 20px;
+  font-size: 24px;
 }
 
 .objectName {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #0f172a;
   margin: 0;
 }
 
 .objectType {
   font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  background-color: #f3f4f6;
   padding: 4px 8px;
+  background: #f1f5f9;
   border-radius: 4px;
+  color: #475569;
 }
 
 .objectStats {
+  flex: 1;
   margin-bottom: 16px;
 }
 
 .statRow {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px dashed #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
 .statName {
-  color: #6b7280;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .statValue {
+  font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
+  color: #0f172a;
 
   &.freePower {
     color: #10b981;
   }
 }
 
+/* Информация о ячейках */
 .cellsInfo {
   font-size: 13px;
 }
 
 .cellsFree {
   color: #10b981;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .cellsFull {
   color: #ef4444;
-  font-weight: 500;
+  font-weight: 600;
 }
 
+/* ТУ бейджи */
 .tcStats {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #f1f5f9;
 }
 
 .tcBadge {
   font-size: 12px;
   padding: 4px 8px;
-  background-color: #f3f4f6;
+  background: #f1f5f9;
   border-radius: 4px;
-  color: #4b5563;
+  color: #475569;
 
   &.activeBadge {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background: #dbeafe;
+    color: #2563eb;
   }
 }
 
+/* Прогресс бар */
 .progressSection {
-  margin-top: 16px;
+  margin-top: auto;
 }
 
 .progressHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 12px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .progressLabel {
-  color: #6b7280;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .progressPercent {
+  font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: #0f172a;
 }
 
 .progressBar {
   height: 8px;
-  background-color: #e5e7eb;
+  background: #e2e8f0;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -403,83 +517,81 @@
   transition: width 0.3s ease;
 }
 
-.resourceBadge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 20px;
-  opacity: 0.5;
-}
-
+/* Нет результатов */
 .noResults {
+  text-align: center;
+  padding: 60px 20px;
   background: white;
   border-radius: 12px;
-  padding: 40px;
-  text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
   p {
-    color: #6b7280;
+    color: #64748b;
     margin-bottom: 16px;
   }
 }
 
 .resetFiltersButton {
-  padding: 8px 16px;
-  background-color: #3b82f6;
-  color: white;
+  padding: 10px 20px;
+  background: #3b82f6;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
+  color: white;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 
   &:hover {
-    background-color: #2563eb;
+    background: #2563eb;
   }
 }
 
-/* Добавьте эти стили в ваш CSS модуль */
-
+/* Навигационные карточки */
 .navigationSection {
   width: 100%;
-  padding: 40px 20px;
-  display: flex;
-  justify-content: center;
+  padding: 2rem;
 }
 
 .navCards {
   display: flex;
-  gap: 30px;
-  flex-wrap: wrap;
+  gap: 2rem;
   justify-content: center;
-  max-width: 1200px;
-  width: 100%;
+  flex-wrap: wrap;
 }
 
 .navCard {
   position: relative;
   display: block;
-  border-radius: 20px;
+  width: 350px;
+  height: 350px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-decoration: none;
-  cursor: pointer;
-  flex: 1 1 300px;
-  max-width: 350px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.navCard:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.5);
+.navCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.navCard:hover::before {
+  opacity: 1;
 }
 
 .navCard img {
   width: 100%;
-  height: 300px;
+  height: 100%;
   object-fit: cover;
-  display: block;
   transition: transform 0.5s ease;
 }
 
@@ -487,140 +599,187 @@
   transform: scale(1.1);
 }
 
-/* Затемнение при наведении */
-.navCard::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.2),
-    rgba(0, 0, 0, 0.7)
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.navCard:hover::after {
-  opacity: 1;
-}
-
-/* Стили для текста */
 .navCard span {
   position: absolute;
-  bottom: -50px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%) scale(0.8);
   color: white;
-  font-size: 24px;
+  font-size: 2rem;
   font-weight: bold;
+  text-align: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 2;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  z-index: 1;
-  transition: bottom 0.3s ease;
-  white-space: nowrap;
-  padding: 10px 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 30px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .navCard:hover span {
-  bottom: 30px;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-  .navCards {
-    gap: 20px;
-  }
-  
-  .navCard {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
-  
-  .navCard span {
-    bottom: 30px; /* Текст виден всегда на мобильных */
-    opacity: 1;
-  }
-  
-  .navCard::after {
-    opacity: 0.5; /* Легкое затемнение всегда на мобильных */
-  }
+
+/* Графики */
+.chartsSection {
+  margin-bottom: 40px;
 }
 
-.navCards {
+.chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
 }
 
-.navCard {
+.chartCard {
+  background: white;
   border-radius: 12px;
   padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 20px 0;
   }
 }
 
-.navCardIcon {
-  font-size: 32px;
+/* Загрузка */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #64748b;
 }
 
-.navCardContent {
-  flex: 1;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
 }
 
-.navCardTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 4px;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.navCardDescription {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
+/* Ошибка */
+.errorContainer {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 40px auto;
+}
+
+.errorIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.errorContainer h2 {
+  font-size: 20px;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.errorContainer p {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.retryButton {
+  padding: 12px 24px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #2563eb;
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .main {
+    margin-left: 0;
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  .statsSummary {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .statCard {
+    flex: 1;
+    min-width: 120px;
+  }
 }
 
 @media (max-width: 768px) {
-  .main {
-    margin-left: 0;
-    padding: 80px 16px 16px;
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .titleSection {
+    justify-content: space-between;
   }
 
   .filters {
     flex-direction: column;
   }
 
-  .searchInput, .filterSelect {
+  .searchInput,
+  .filterSelect,
+  .resetButton {
     width: 100%;
-  }
-
-  .chartsGrid {
-    grid-template-columns: 1fr;
   }
 
   .objectsGrid {
     grid-template-columns: 1fr;
   }
 
-  .navCards {
+  .chartsGrid {
     grid-template-columns: 1fr;
+  }
+
+  
+
+  .notificationDropdown {
+    width: 300px;
+    right: -100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsSummary {
+    flex-direction: column;
+  }
+
+  .statCard {
+    width: 100%;
+  }
+
+  .notificationDropdown {
+    width: 280px;
+    right: -140px;
   }
 }
