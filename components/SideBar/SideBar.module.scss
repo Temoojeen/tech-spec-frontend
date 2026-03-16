@@ -1,5 +1,5 @@
 .sidebar {
-  width: 300px;
+  width: 250px;
   min-height: 100vh;
   background: white;
   display: flex;
@@ -30,7 +30,7 @@
   width: 100%;
   height: 200%;
   background-image: url('/assets/images/img.jpg');
-  background-size: cover;
+  background-size: contain;
   background-repeat: repeat-y;
   animation: scrollBackground 20s linear infinite;
 }
@@ -62,12 +62,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  text-align: left;
   z-index: 2;
 }
 
 .brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
+  width: 100%;
+  height: 100%;
 }
 
 .brand h3 {
@@ -76,7 +82,9 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #aaa;
-  margin-bottom: 8px;
+  margin: 0 0 8px 0;
+  width: 100%;
+  text-align: center;
 }
 
 .brand h2 {
@@ -87,6 +95,9 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   transition: transform 0.3s ease;
+  margin: 0;
+  width: 100%;
+  text-align: center;
 }
 
 .brand:hover h2 {
@@ -116,7 +127,6 @@
 }
 
 @media (max-width: 900px) {
-
   .sidebar {
     width: 100%;
     min-height: auto;
@@ -139,6 +149,32 @@
     height: 150px;
     min-height: auto;
     padding: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .brand h3 {
+    font-size: 12px;
+    margin: 0 0 5px 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .brand h2 {
+    font-size: 18px;
+    margin: 0;
+    text-align: center;
+    width: 100%;
   }
 
   .top_section .scrolling_bg {
@@ -148,18 +184,9 @@
   .bottom_section .scrolling_bg {
     animation-duration: 18s;
   }
-
-  .brand h3 {
-    font-size: 12px;
-  }
-
-  .brand h2 {
-    font-size: 18px;
-  }
 }
 
 @media (max-width: 600px) {
-
   .sidebar {
     flex-direction: column;
   }
@@ -174,6 +201,29 @@
     width: 100%;
     height: 15vh;
     min-height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .brand h3 {
+    margin: 0 0 5px 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .brand h2 {
+    text-align: center;
+    width: 100%;
   }
 
   .top_section .scrolling_bg {
@@ -194,7 +244,6 @@
 }
 
 @media (max-width: 480px) {
-
   .top_section,
   .bottom_section {
     height: 20vh;
@@ -206,20 +255,34 @@
     padding: 10px;
   }
 
+  .brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .brand h3 {
+    margin: 0 0 4px 0;
+    text-align: center;
+    width: 100%;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .brand h2 {
+    text-align: center;
+    width: 100%;
+    font-size: 18px;
+  }
+
   .top_section .scrolling_bg {
     animation-duration: 10s;
   }
 
   .bottom_section .scrolling_bg {
     animation-duration: 12s;
-  }
-
-  .brand h2 {
-    font-size: 18px;
-  }
-
-  .brand h3 {
-    font-size: 11px;
-    letter-spacing: 1px;
   }
 }

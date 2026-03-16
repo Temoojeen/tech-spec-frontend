@@ -114,7 +114,8 @@ export default function TCManagementPage() {
               <th className={styles.th}>Дата выдачи</th>
               <th className={styles.th}>Дата окончания</th>
               <th className={styles.th}>Статус</th>
-              <th className={styles.th}>Действия</th>
+              {isAdmin &&
+              <th className={styles.th}>Действия</th>}
             </tr>
           </thead>
           <tbody className={styles.tbody}>
@@ -145,6 +146,7 @@ export default function TCManagementPage() {
                       {formatTCStatus(tc.status)}
                     </span>
                   </td>
+                  {isAdmin &&
                   <td className={styles.td}>
                     <Link 
                       href={`/admin/tc-management/${tc.id}/edit`} 
@@ -162,7 +164,7 @@ export default function TCManagementPage() {
                     >
                       Удалить
                     </button>
-                  </td>
+                  </td>}
                 </tr>
               ))
             )}

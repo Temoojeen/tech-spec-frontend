@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
-import { PowerObject, ResourceType, getObjectTypeLabel, getResourceTypeLabel } from '@/types';
+import { PowerObjectWithStats, ResourceType, getObjectTypeLabel, getResourceTypeLabel } from '@/types';
 import styles from './page.module.scss';
 import Header from '@/components/Header/Header';
 
@@ -19,9 +19,9 @@ export default function ObjectsPage() {
     queryKey: ['objects', resourceFilter],
     queryFn: async () => {
       const url = resourceFilter !== 'all' 
-        ? `/objects/?resource_type=${resourceFilter}`
-        : '/objects/';
-      const response = await api.get<PowerObject[]>(url);
+        ? `/objects/?resource_type=${resourceFilter}&with_stats=true`
+        : '/objects/?with_stats=true';
+      const response = await api.get<PowerObjectWithStats[]>(url);
       return response.data;
     },
     enabled: isAdmin,
@@ -44,15 +44,13 @@ export default function ObjectsPage() {
   );
 
   // Получение отображаемой мощности объекта
-  const getDisplayPower = (obj: PowerObject): { value: number; unit: string } => {
+  const getDisplayPower = (obj: PowerObjectWithStats): { value: number; unit: string } => {
     if (obj.resource_type === 'electricity') {
-      // Для электричества показываем в МВт если >= 1, иначе в кВт
       if (obj.max_power_electricity_mw && obj.max_power_electricity_mw >= 1) {
         return { value: obj.max_power_electricity_mw, unit: 'МВт' };
       }
       return { value: obj.max_power_electricity_kw || 0, unit: 'кВт' };
     } else {
-      // Для воды показываем в м³/ч
       return { value: obj.max_power_water_m3h || 0, unit: 'м³/ч' };
     }
   };
@@ -77,9 +75,10 @@ export default function ObjectsPage() {
       
       <div className={styles.header}>
         <h1 className={styles.title}>Управление объектами</h1>
+        {isAdmin &&
         <Link href="/admin/objects/create" className={styles.createButton}>
           + Добавить объект
-        </Link>
+        </Link>}
       </div>
 
       <div className={styles.filters}>
@@ -115,14 +114,16 @@ export default function ObjectsPage() {
               <th className={styles.th}>Название</th>
               <th className={styles.th}>Тип ресурса</th>
               <th className={styles.th}>Мощность</th>
-              <th className={styles.th}>Описание</th>
-              <th className={styles.th}>Действия</th>
+              <th className={styles.th}>Ячейки</th>
+              <th className={styles.th}>Загрузка</th>
+              {isAdmin &&
+              <th className={styles.th}>Действия</th>}
             </tr>
           </thead>
           <tbody className={styles.tbody}>
             {filteredObjects?.length === 0 ? (
               <tr>
-                <td colSpan={7} className={styles.noData}>
+                <td colSpan={8} className={styles.noData}>
                   Нет объектов для отображения
                 </td>
               </tr>
@@ -137,7 +138,12 @@ export default function ObjectsPage() {
                         {getTypeIcon(obj.type)} {getObjectTypeLabel(obj.type)}
                       </span>
                     </td>
-                    <td className={styles.td}>{obj.name}</td>
+                    <td className={styles.td}>
+                      {obj.name}
+                      {obj.parent_id && (
+                        <span className={styles.childIndicator}> </span>
+                      )}
+                    </td>
                     <td className={styles.td}>
                       <span className={`${styles.resourceBadge} ${styles[obj.resource_type]}`}>
                         {obj.resource_type === 'electricity' ? '⚡' : '💧'} {getResourceTypeLabel(obj.resource_type)}
@@ -147,20 +153,40 @@ export default function ObjectsPage() {
                       <span className={styles.powerValue}>
                         {displayPower.value.toFixed(2)} {displayPower.unit}
                       </span>
-                      {obj.resource_type === 'electricity' && obj.max_power_electricity_kw && (
-                        <span className={styles.powerDetail}>
-                          ({obj.max_power_electricity_kw} кВт)
-                        </span>
-                      )}
-                      {obj.resource_type === 'water' && obj.max_power_water_m3d && (
-                        <span className={styles.powerDetail}>
-                          ({obj.max_power_water_m3d} м³/сут)
-                        </span>
+                    </td>
+                    <td className={styles.td}>
+                      {obj.type !== 'substation' ? (
+                        <div className={styles.cellsInfo}>
+                          <span className={`${styles.cellsBadge} ${
+                            obj.available_cells > 0 ? styles.hasFree : styles.noFree
+                          }`}>
+                            {obj.available_cells}/{obj.total_cells}
+                          </span>
+                          <span className={styles.cellsLabel}>свободно</span>
+                          {obj.available_cells === 0 && obj.free_power > 0 && (
+                            <span className={styles.canAddCells} title="Можно добавить ячейки">
+                              ⚠️ {obj.free_power.toFixed(1)} {obj.free_power_unit} свободно
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className={styles.noCells}>—</span>
                       )}
                     </td>
                     <td className={styles.td}>
-                      {obj.description || '-'}
+                      <div className={styles.loadingInfo}>
+                        <div className={styles.progressBar}>
+                          <div 
+                            className={styles.progressFill}
+                            style={{ width: `${obj.usage_percent || 0}%` }}
+                          />
+                        </div>
+                        <span className={styles.usagePercent}>
+                          {(obj.usage_percent || 0).toFixed(1)}%
+                        </span>
+                      </div>
                     </td>
+                    {isAdmin &&
                     <td className={styles.td}>
                       <Link 
                         href={`/admin/objects/${obj.id}/edit`} 
@@ -178,7 +204,7 @@ export default function ObjectsPage() {
                       >
                         Удалить
                       </button>
-                    </td>
+                    </td>}
                   </tr>
                 );
               })
@@ -204,6 +230,18 @@ export default function ObjectsPage() {
             <span className={styles.statLabel}>💧 Водоснабжение:</span>
             <span className={styles.statValue}>
               {objects.filter(obj => obj.resource_type === 'water').length}
+            </span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Подстанции:</span>
+            <span className={styles.statValue}>
+              {objects.filter(obj => obj.type === 'substation').length}
+            </span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>ТП/КРУ:</span>
+            <span className={styles.statValue}>
+              {objects.filter(obj => obj.type !== 'substation').length}
             </span>
           </div>
         </div>

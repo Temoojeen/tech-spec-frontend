@@ -17,6 +17,16 @@ const nextConfig = {
         hostname: 'yt3.googleusercontent.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ovikv.ru',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'thumbs.dreamstime.com',
+        pathname: '/**',
+      },
     ],
   },
 };

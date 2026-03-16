@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react'; // Добавлен useMemo
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, useWatch } from 'react-hook-form';
@@ -10,10 +10,22 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
-import { Organization, PowerObject, ResourceType, TCType, PowerUnit } from '@/types';
+import { 
+  Organization, PowerObject, 
+  ResourceType, TCType, PowerUnit 
+} from '@/types';
 import Button from '@/components/ui/Button';
 import Header from '@/components/Header/Header';
 import styles from './page.module.scss';
+
+// ===== Типы для ответа от API =====
+interface AvailableCellsResponse {
+  available_cells: number[];
+  free_power: number;
+  free_power_unit: string;
+  total_cells: number;
+  occupied_cells: number;
+}
 
 /* =========================
    ZOD SCHEMA
@@ -27,6 +39,10 @@ const tcSchema = z
     object_id: z
       .number()
       .refine(val => !isNaN(val) && val > 0, { message: 'Выберите объект' }),
+
+    cell_number: z
+      .number()
+      .refine(val => !isNaN(val) && val > 0, { message: 'Выберите ячейку' }),
 
     resource_type: z.enum(['electricity', 'water'] as const),
 
@@ -44,23 +60,8 @@ const tcSchema = z
 
     expiry_date: z.string().optional(),
 
-    document_link: z.string().optional(),
     notes: z.string().optional(),
   })
-  .refine(
-    data => data.organization_id > 0,
-    {
-      path: ['organization_id'],
-      message: 'Выберите организацию',
-    }
-  )
-  .refine(
-    data => data.object_id > 0,
-    {
-      path: ['object_id'],
-      message: 'Выберите объект',
-    }
-  )
   .refine(
     data => data.tc_type === 'permanent' || (data.tc_type === 'temporary' && !!data.expiry_date),
     {
@@ -94,8 +95,6 @@ interface ApiError {
   };
 }
 
-// ===== Вспомогательные функции =====
-
 /* =========================
    COMPONENT
 ========================= */
@@ -103,7 +102,6 @@ export default function CreateTCPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-  // Убираем состояние availableObjects, будем использовать useMemo
 
   const {
     register,
@@ -157,21 +155,30 @@ export default function CreateTCPage() {
     },
   });
 
-  // ИСПРАВЛЕНИЕ: Используем useMemo вместо состояния и эффекта
+  // Фильтруем объекты по типу ресурса и исключаем подстанции
   const availableObjects = useMemo(() => {
     if (!allObjects) return [];
-    return allObjects.filter(obj => obj.resource_type === resourceType);
+    return allObjects.filter(obj => 
+      obj.resource_type === resourceType && 
+      obj.type !== 'substation' // Только ТП и КРУ
+    );
   }, [allObjects, resourceType]);
 
-  // Отдельный эффект только для сброса выбранного объекта
+  // Загружаем информацию о свободных ячейках при выборе объекта
+  const { data: cellData, refetch: refetchCells } = useQuery({
+    queryKey: ['available-cells', selectedObjectId],
+    queryFn: async () => {
+      if (!selectedObjectId) return null;
+      const res = await api.get<AvailableCellsResponse>(`/objects/${selectedObjectId}/available-cells`);
+      return res.data;
+    },
+    enabled: !!selectedObjectId,
+  });
+
+  // Сбрасываем выбранную ячейку при смене объекта
   useEffect(() => {
-    if (allObjects && selectedObjectId) {
-      const selectedObj = allObjects.find(obj => obj.id === selectedObjectId);
-      if (selectedObj && selectedObj.resource_type !== resourceType) {
-        setValue('object_id', undefined as unknown as number);
-      }
-    }
-  }, [allObjects, resourceType, selectedObjectId, setValue]);
+    setValue('cell_number', undefined as unknown as number);
+  }, [selectedObjectId, setValue]);
 
   /* =========================
      CREATE MUTATION
@@ -196,6 +203,9 @@ export default function CreateTCPage() {
       const errorMsg = error.response?.data?.error;
       if (errorMsg?.includes('Недостаточно свободной мощности')) {
         setServerError('Недостаточно свободной мощности на выбранном объекте');
+      } else if (errorMsg?.includes('ячейка уже занята')) {
+        setServerError('Эта ячейка уже занята. Пожалуйста, выберите другую');
+        refetchCells(); // Обновляем список свободных ячеек
       } else {
         setServerError(errorMsg || 'Ошибка при создании ТУ. Попробуйте снова.');
       }
@@ -205,6 +215,31 @@ export default function CreateTCPage() {
   const onSubmit = (data: TCFormData) => {
     setServerError(null);
     createMutation.mutate(data);
+  };
+
+  /* =========================
+     ADD CELLS HANDLER
+  ========================= */
+  const handleAddCells = async () => {
+    const additionalCells = prompt('Сколько ячеек добавить?', '1');
+    if (!additionalCells) return;
+    
+    const num = parseInt(additionalCells);
+    if (isNaN(num) || num <= 0) {
+      alert('Введите положительное число');
+      return;
+    }
+
+    try {
+      await api.post(`/objects/${selectedObjectId}/add-cells`, {
+        additional_cells: num
+      });
+      refetchCells(); // Обновляем список ячеек
+      alert(`Добавлено ${num} ячеек`);
+    } catch (error) {
+      alert('Ошибка при добавлении ячеек');
+      console.log(error)
+    }
   };
 
   /* =========================
@@ -226,7 +261,7 @@ export default function CreateTCPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Создание нового ТУ</h1>
         <Link href="/admin/tc-management" className={styles.backLink}>
-           Назад к списку
+          ← Назад к списку
         </Link>
       </div>
 
@@ -270,7 +305,7 @@ export default function CreateTCPage() {
                 }`}
                 onClick={() => setValue('resource_type', 'electricity')}
               >
-                 Электроснабжение
+                ⚡ Электроснабжение
               </button>
               <button
                 type="button"
@@ -279,7 +314,7 @@ export default function CreateTCPage() {
                 }`}
                 onClick={() => setValue('resource_type', 'water')}
               >
-                 Водоснабжение
+                💧 Водоснабжение
               </button>
             </div>
             <input type="hidden" {...register('resource_type')} />
@@ -310,15 +345,65 @@ export default function CreateTCPage() {
             {errors.object_id && (
               <p className={styles.errorText}>{errors.object_id.message}</p>
             )}
-            {availableObjects.length === 0 && resourceType && (
-              <p className={styles.hint}>
-                Нет объектов с выбранным типом ресурса. 
-                <Link href="/admin/objects/create" className={styles.hintLink}>
-                  Создать объект
-                </Link>
-              </p>
-            )}
           </div>
+
+          {/* Информация о выбранном объекте и выбор ячейки */}
+          {selectedObjectId && cellData && (
+            <div className={styles.formFieldFull}>
+              <div className={styles.objectInfo}>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Свободная мощность:</span>
+                  <span className={styles.infoValue}>
+                    {cellData.free_power.toFixed(2)} {cellData.free_power_unit}
+                  </span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Ячейки:</span>
+                  <span className={styles.infoValue}>
+                    {cellData.available_cells.length} / {cellData.total_cells} свободно
+                  </span>
+                </div>
+              </div>
+
+              {cellData.available_cells.length > 0 ? (
+                <div className={styles.formField}>
+                  <label className={styles.label}>
+                    Выберите ячейку <span className={styles.required}>*</span>
+                  </label>
+                  <select
+                    {...register('cell_number', { valueAsNumber: true })}
+                    className={`${styles.select} ${errors.cell_number ? styles.error : ''}`}
+                  >
+                    <option value="">Выберите ячейку</option>
+                    {cellData.available_cells.map((cellNum: number) => (
+                      <option key={cellNum} value={cellNum}>
+                        Ячейка №{cellNum}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.cell_number && (
+                    <p className={styles.errorText}>{errors.cell_number.message}</p>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.warning}>
+                  <p className={styles.warningText}>
+                    ⚠️ Нет свободных ячеек
+                  </p>
+                  {cellData.free_power > 0 && (
+                    isAdmin &&
+                    <button
+                      type="button"
+                      onClick={handleAddCells}
+                      className={styles.addCellButton}
+                    >
+                      + Добавить ячейку
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Тип ТУ */}
           <div className={styles.formField}>

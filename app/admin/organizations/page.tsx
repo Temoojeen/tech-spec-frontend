@@ -29,6 +29,7 @@ export default function OrganizationsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organizations/'] });
+      window.location.reload()
     },
   });
 
@@ -47,9 +48,10 @@ export default function OrganizationsPage() {
         <Header/>
       <div className={styles.header}>
         <h1 className={styles.title}>Управление организациями</h1>
+        {isAdmin &&
         <Link href="/admin/organizations/create" className={styles.createButton}>
           + Добавить организацию
-        </Link>
+        </Link>}
       </div>
 
       <div className={styles.searchBar}>
@@ -72,7 +74,8 @@ export default function OrganizationsPage() {
               <th className={styles.th}>Адрес</th>
               <th className={styles.th}>Контактное лицо</th>
               <th className={styles.th}>Телефон</th>
-              <th className={styles.th}>Действия</th>
+              {isAdmin &&
+              <th className={styles.th}>Действия</th>}
             </tr>
           </thead>
           <tbody className={styles.tbody}>
@@ -84,6 +87,7 @@ export default function OrganizationsPage() {
                 <td className={styles.td}>{org.address || '-'}</td>
                 <td className={styles.td}>{org.contact_person || '-'}</td>
                 <td className={styles.td}>{org.contact_phone || '-'}</td>
+                {isAdmin &&
                 <td className={styles.td}>
                   
                   <Link href={`/admin/organizations/${org.id}/edit`} className={styles.editButton}>
@@ -99,7 +103,7 @@ export default function OrganizationsPage() {
                   >
                     Удалить
                   </button>
-                </td>
+                </td>}
               </tr>
             ))}
           </tbody>

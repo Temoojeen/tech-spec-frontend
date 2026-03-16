@@ -10,12 +10,24 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
-import { Organization, PowerObject, TechnicalCondition, ResourceType, TCType, PowerUnit } from '@/types';
+import { 
+  Organization, PowerObject, TechnicalCondition, 
+  ResourceType, TCType, PowerUnit 
+} from '@/types';
 import Header from '@/components/Header/Header';
 import styles from './page.module.scss';
 
+// ===== Типы для ответа от API =====
+interface AvailableCellsResponse {
+  available_cells: number[];
+  free_power: number;
+  free_power_unit: string;
+  total_cells: number;
+  occupied_cells: number;
+}
+
 /* =========================
-   ZOD SCHEMA (UPDATED)
+   ZOD SCHEMA
 ========================= */
 const tcSchema = z
   .object({
@@ -26,6 +38,10 @@ const tcSchema = z
     object_id: z
       .number()
       .refine(val => !isNaN(val) && val > 0, { message: 'Выберите объект' }),
+
+    cell_number: z
+      .number()
+      .refine(val => !isNaN(val) && val > 0, { message: 'Выберите ячейку' }),
 
     resource_type: z.enum(['electricity', 'water'] as const),
 
@@ -43,23 +59,8 @@ const tcSchema = z
 
     expiry_date: z.string().optional(),
 
-    document_link: z.string().optional(),
     notes: z.string().optional(),
   })
-  .refine(
-    data => data.organization_id > 0,
-    {
-      path: ['organization_id'],
-      message: 'Выберите организацию',
-    }
-  )
-  .refine(
-    data => data.object_id > 0,
-    {
-      path: ['object_id'],
-      message: 'Выберите объект',
-    }
-  )
   .refine(
     data => data.tc_type === 'permanent' || (data.tc_type === 'temporary' && !!data.expiry_date),
     {
@@ -93,12 +94,10 @@ interface ApiError {
   };
 }
 
-// Функция для определения подходящей единицы измерения
-const determinePowerUnit = (tc: TechnicalCondition): { value: number; unit: 'kw' | 'mw' | 'm3h' | 'm3d' } => {
-  return {
-    value: tc.power_amount,
-    unit: tc.power_unit as 'kw' | 'mw' | 'm3h' | 'm3d'
-  };
+// Функция для форматирования даты
+const formatDateForInput = (dateString?: string | null): string => {
+  if (!dateString) return '';
+  return dateString.split('T')[0];
 };
 
 /* =========================
@@ -179,21 +178,25 @@ export default function EditTCPage() {
     enabled: isAdmin,
   });
 
-  // ИСПОЛЬЗУЕМ useMemo ВМЕСТО state + эффект
+  // Фильтруем объекты по типу ресурса
   const availableObjects = useMemo(() => {
     if (!allObjects) return [];
-    return allObjects.filter(obj => obj.resource_type === resourceType);
+    return allObjects.filter(obj => 
+      obj.resource_type === resourceType && 
+      obj.type !== 'substation'
+    );
   }, [allObjects, resourceType]);
 
-  // Отдельный эффект только для сброса выбранного объекта
-  useEffect(() => {
-    if (allObjects && selectedObjectId) {
-      const selectedObj = allObjects.find(obj => obj.id === selectedObjectId);
-      if (selectedObj && selectedObj.resource_type !== resourceType) {
-        setValue('object_id', undefined as unknown as number);
-      }
-    }
-  }, [allObjects, resourceType, selectedObjectId, setValue]);
+  // Загружаем информацию о свободных ячейках
+  const { data: cellData, refetch: refetchCells } = useQuery({
+    queryKey: ['available-cells', selectedObjectId],
+    queryFn: async () => {
+      if (!selectedObjectId) return null;
+      const res = await api.get<AvailableCellsResponse>(`/objects/${selectedObjectId}/available-cells`);
+      return res.data;
+    },
+    enabled: !!selectedObjectId,
+  });
 
   /* =========================
      FILL FORM
@@ -201,23 +204,27 @@ export default function EditTCPage() {
   useEffect(() => {
     if (!tc) return;
 
-    const formatDate = (d?: string) => (d ? d.split('T')[0] : '');
-    const powerInfo = determinePowerUnit(tc);
-
     reset({
       organization_id: tc.organization_id,
       object_id: tc.object_id,
+      cell_number: tc.cell_number,
       tc_type: tc.tc_type,
       resource_type: tc.resource_type,
       tc_number: tc.tc_number,
-      power_amount: powerInfo.value,
-      power_unit: powerInfo.unit,
-      issue_date: formatDate(tc.issue_date),
-      expiry_date: formatDate(tc.expiry_date),
-      document_link: tc.document_link || '',
+      power_amount: tc.power_amount,
+      power_unit: tc.power_unit,
+      issue_date: formatDateForInput(tc.issue_date),
+      expiry_date: formatDateForInput(tc.expiry_date),
       notes: tc.notes || '',
     });
   }, [tc, reset]);
+
+  // Сбрасываем выбранную ячейку при смене объекта
+  useEffect(() => {
+    if (selectedObjectId && selectedObjectId !== tc?.object_id) {
+      setValue('cell_number', undefined as unknown as number);
+    }
+  }, [selectedObjectId, setValue, tc?.object_id]);
 
   /* =========================
      UPDATE MUTATION
@@ -243,6 +250,9 @@ export default function EditTCPage() {
       const errorMsg = error.response?.data?.error;
       if (errorMsg?.includes('Недостаточно свободной мощности')) {
         setServerError('Недостаточно свободной мощности на выбранном объекте');
+      } else if (errorMsg?.includes('ячейка уже занята')) {
+        setServerError('Эта ячейка уже занята. Пожалуйста, выберите другую');
+        refetchCells();
       } else {
         setServerError(errorMsg || 'Ошибка при обновлении ТУ. Попробуйте снова.');
       }
@@ -252,6 +262,31 @@ export default function EditTCPage() {
   const onSubmit = (data: TCFormData) => {
     setServerError(null);
     updateMutation.mutate(data);
+  };
+
+  /* =========================
+     ADD CELLS HANDLER
+  ========================= */
+  const handleAddCells = async () => {
+    const additionalCells = prompt('Сколько ячеек добавить?', '1');
+    if (!additionalCells) return;
+    
+    const num = parseInt(additionalCells);
+    if (isNaN(num) || num <= 0) {
+      alert('Введите положительное число');
+      return;
+    }
+
+    try {
+      await api.post(`/objects/${selectedObjectId}/add-cells`, {
+        additional_cells: num
+      });
+      refetchCells();
+      alert(`Добавлено ${num} ячеек`);
+    } catch (error) {
+      alert('Ошибка при добавлении ячеек');
+      console.log(error)
+    }
   };
 
   /* =========================
@@ -284,7 +319,7 @@ export default function EditTCPage() {
       <Header />
 
       <div className={styles.header}>
-        <h1 className={styles.title}>Редактирование ТУ </h1>
+        <h1 className={styles.title}>Редактирование ТУ {tc.tc_number}</h1>
         <Link href="/admin/tc-management" className={styles.backLink}>
            Назад к списку
         </Link>
@@ -370,15 +405,74 @@ export default function EditTCPage() {
             {errors.object_id && (
               <p className={styles.errorText}>{errors.object_id.message}</p>
             )}
-            {availableObjects.length === 0 && resourceType && (
-              <p className={styles.hint}>
-                Нет объектов с выбранным типом ресурса. 
-                <Link href="/admin/objects/create" className={styles.hintLink}>
-                  Создать объект
-                </Link>
-              </p>
-            )}
           </div>
+
+          {/* Информация о выбранном объекте и выбор ячейки */}
+          {selectedObjectId && cellData && (
+            <div className={styles.formFieldFull}>
+              <div className={styles.objectInfo}>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Свободная мощность:</span>
+                  <span className={styles.infoValue}>
+                    {cellData.free_power.toFixed(2)} {cellData.free_power_unit}
+                  </span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Ячейки:</span>
+                  <span className={styles.infoValue}>
+                    {cellData.available_cells.length} / {cellData.total_cells} свободно
+                  </span>
+                </div>
+              </div>
+
+              {cellData.available_cells.length > 0 || selectedObjectId === tc?.object_id ? (
+                <div className={styles.formField}>
+                  <label className={styles.label}>
+                    Выберите ячейку <span className={styles.required}>*</span>
+                  </label>
+                  <select
+                    {...register('cell_number', { valueAsNumber: true })}
+                    className={`${styles.select} ${errors.cell_number ? styles.error : ''}`}
+                  >
+                    <option value="">Выберите ячейку</option>
+                    {/* Если это текущая ячейка, показываем её даже если она занята */}
+                    {selectedObjectId === tc?.object_id && (
+                      <option key={tc.cell_number} value={tc.cell_number}>
+                        Ячейка №{tc.cell_number} (текущая)
+                      </option>
+                    )}
+                    {/* Показываем свободные ячейки */}
+                    {cellData.available_cells
+                      .filter(cell => cell !== tc?.cell_number) // Исключаем текущую, если она уже добавлена
+                      .map((cellNum: number) => (
+                        <option key={cellNum} value={cellNum}>
+                          Ячейка №{cellNum}
+                        </option>
+                      ))}
+                  </select>
+                  {errors.cell_number && (
+                    <p className={styles.errorText}>{errors.cell_number.message}</p>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.warning}>
+                  <p className={styles.warningText}>
+                    ⚠️ Нет свободных ячеек
+                  </p>
+                  {cellData.free_power > 0 && (
+                    isAdmin &&
+                    <button
+                      type="button"
+                      onClick={handleAddCells}
+                      className={styles.addCellButton}
+                    >
+                      + Добавить ячейку
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Тип ТУ */}
           <div className={styles.formField}>

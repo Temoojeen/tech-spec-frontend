@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
+import { PowerObject, ResourceType, ObjectType } from '@/types';
 import Button from '@/components/ui/Button';
 import styles from './page.module.scss';
 import Header from '@/components/Header/Header';
@@ -28,8 +29,10 @@ const objectSchema = z.object({
   name: z.string().min(2, 'Название должно содержать минимум 2 символа'),
   type: z.enum(['substation', 'tp', 'kru']),
   resource_type: z.enum(['electricity', 'water']),
+  parent_id: z.number().optional().nullable(),
   power_value: z.number().min(0.01, 'Мощность должна быть больше 0'),
   power_unit: z.enum(['mw', 'kw', 'm3h', 'm3d']),
+  total_cells: z.number().min(0, 'Количество ячеек не может быть отрицательным'),
   description: z.string().optional(),
 }).refine(
   (data) => {
@@ -46,22 +49,23 @@ const objectSchema = z.object({
     message: 'Неверная единица измерения для выбранного типа ресурса',
     path: ['power_unit'],
   }
+).refine(
+  (data) => {
+    // Для подстанций не нужны ячейки и parent_id
+    if (data.type === 'substation') {
+      return data.total_cells === 0;
+    }
+    // Для ТП и КРУ нужны ячейки
+    return data.total_cells > 0;
+  },
+  {
+    message: 'Для ТП и КРУ необходимо указать количество ячеек (больше 0)',
+    path: ['total_cells'],
+  }
 );
 
 // ===== Тип формы =====
 type ObjectFormData = z.infer<typeof objectSchema>;
-
-// ===== DTO для бэка =====
-interface CreateObjectRequest {
-  name: string;
-  type: 'substation' | 'tp' | 'kru';
-  resource_type: 'electricity' | 'water';
-  power_value: number;
-  power_unit: 'mw' | 'kw' | 'm3h' | 'm3d';
-  description?: string;
-}
-
-// ===== Вспомогательные функции =====
 
 export default function CreateObjectPage() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -81,15 +85,29 @@ export default function CreateObjectPage() {
       name: '',
       type: 'substation',
       resource_type: 'electricity',
+      parent_id: undefined,
       power_value: 0,
       power_unit: 'mw',
+      total_cells: 0,
       description: '',
     },
   });
 
   // ===== useWatch для отслеживания изменений =====
-  const resourceType = useWatch({ control, name: 'resource_type' });
-  const powerUnit = useWatch({ control, name: 'power_unit' });
+  const objectType = useWatch({ control, name: 'type' }) as ObjectType;
+  const resourceType = useWatch({ control, name: 'resource_type' }) as ResourceType;
+  const powerUnit = useWatch({ control, name: 'power_unit' }) as string;
+
+  // ===== Загрузка подстанций для выпадающего списка =====
+  const { data: substations } = useQuery({
+    queryKey: ['substations'],
+    queryFn: async () => {
+      const response = await api.get<PowerObject[]>('/objects/?resource_type=electricity');
+      // Фильтруем только подстанции
+      return response.data.filter(obj => obj.type === 'substation');
+    },
+    enabled: isAdmin && objectType !== 'substation',
+  });
 
   // Автоматически меняем единицу измерения при смене типа ресурса
   const handleResourceTypeChange = (type: 'electricity' | 'water') => {
@@ -101,10 +119,25 @@ export default function CreateObjectPage() {
     }
   };
 
+  // Сброс полей при смене типа объекта
+  useEffect(() => {
+    if (objectType === 'substation') {
+      setValue('parent_id', undefined);
+      setValue('total_cells', 0);
+    } else {
+      setValue('total_cells', 1); // По умолчанию 1 ячейка
+    }
+  }, [objectType, setValue]);
+
   // ===== Mutation =====
   const createMutation = useMutation({
-    mutationFn: async (data: CreateObjectRequest) => {
-      const response = await api.post('/objects/', data);
+    mutationFn: async (data: ObjectFormData) => {
+      // Подготавливаем данные для отправки
+      const payload = {
+        ...data,
+        parent_id: data.type !== 'substation' ? data.parent_id : null,
+      };
+      const response = await api.post('/objects/', payload);
       return response.data;
     },
     onSuccess: () => {
@@ -141,7 +174,7 @@ export default function CreateObjectPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Создание нового объекта</h1>
         <Link href="/admin/objects" className={styles.backLink}>
-           Назад к списку
+          ← Назад к списку
         </Link>
       </div>
 
@@ -186,6 +219,31 @@ export default function CreateObjectPage() {
               <option value="kru">КРУ</option>
             </select>
           </div>
+
+          {/* Родительская подстанция (для ТП/КРУ) */}
+          {objectType !== 'substation' && (
+            <div className={styles.formField}>
+              <label className={styles.label}>
+                Родительская подстанция <span className={styles.required}>*</span>
+              </label>
+              <select
+                {...register('parent_id', { valueAsNumber: true })}
+                className={`${styles.select} ${
+                  errors.parent_id ? styles.error : ''
+                }`}
+              >
+                <option value="">Выберите подстанцию</option>
+                {substations?.map(sub => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name} ({sub.max_power_electricity_mw} МВт)
+                  </option>
+                ))}
+              </select>
+              {errors.parent_id && (
+                <p className={styles.errorText}>{errors.parent_id.message}</p>
+              )}
+            </div>
+          )}
 
           {/* Тип ресурса */}
           <div className={styles.formField}>
@@ -291,6 +349,28 @@ export default function CreateObjectPage() {
               </p>
             )}
           </div>
+
+          {/* Количество ячеек (только для ТП/КРУ) */}
+          {objectType !== 'substation' && (
+            <div className={styles.formField}>
+              <label className={styles.label}>
+                Количество ячеек <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                {...register('total_cells', { valueAsNumber: true })}
+                className={`${styles.input} ${
+                  errors.total_cells ? styles.error : ''
+                }`}
+                placeholder="12"
+              />
+              {errors.total_cells && (
+                <p className={styles.errorText}>{errors.total_cells.message}</p>
+              )}
+            </div>
+          )}
 
           {/* Описание */}
           <div className={styles.formFieldFull}>

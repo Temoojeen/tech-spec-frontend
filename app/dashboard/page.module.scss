@@ -1,335 +1,584 @@
-// dashboard/page.module.scss
-
 .dashboardLayout {
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: #f3f4f6;
 }
 
 .main {
-  margin-left: 280px; // Отступ для SideBar
-  padding: 2rem;
-  padding-top: 80px; // Отступ для Header
+  margin-left: 250px;
+  padding: 80px 24px 24px;
+}
 
-  @media (max-width: 768px) {
-    margin-left: 0;
-    padding: 1rem;
-    padding-top: 70px;
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f3f4f6;
+  
+  p {
+    margin-top: 16px;
+    color: #6b7280;
+    font-size: 16px;
   }
 }
 
-// Заголовок и статистика
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
 
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: flex-start;
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f3f4f6;
+  text-align: center;
+  padding: 0 20px;
+
+  .errorIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
   }
+
+  h2 {
+    color: #1f2937;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: #6b7280;
+    margin-bottom: 24px;
+  }
+}
+
+.retryButton {
+  padding: 10px 20px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563eb;
+  }
+}
+
+.header {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 24px;
   font-weight: 600;
-  color: #111827;
-  margin: 0;
+  color: #1f2937;
+}
 
-  @media (max-width: 640px) {
-    font-size: 1.5rem;
+.exportButton {
+  padding: 8px 16px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background-color: #059669;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
 .statsSummary {
-  display: flex;
-  gap: 1.5rem;
-  background: white;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 640px) {
-    width: 100%;
-    justify-content: space-around;
-    padding: 0.75rem;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .statCard {
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.statLabel {
+  display: block;
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.statDetail {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.filtersSection {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filters {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 80px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
-  .statValue {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2563eb;
-    line-height: 1.2;
+.searchInput {
+  flex: 1;
+  min-width: 250px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
 
-    @media (max-width: 640px) {
-      font-size: 1.25rem;
-    }
-  }
-
-  .statLabel {
-    font-size: 0.875rem;
-    color: #6b7280;
-    text-align: center;
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 }
 
-// Секции
+.filterSelect {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+  min-width: 150px;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+}
+
+.resetButton {
+  padding: 10px 16px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #dc2626;
+  }
+}
+
+.chartsSection {
+  margin-bottom: 32px;
+}
+
 .sectionTitle {
-  font-size: 1.25rem;
+  font-size: 18px;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e5e7eb;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.chartCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 16px;
+  }
 }
 
 .objectsSection {
-  margin-bottom: 3rem;
+  margin-bottom: 32px;
 }
 
-.navigationSection {
-  margin-top: 3rem;
-}
-
-// Сетка объектов
 .objectsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
+  gap: 20px;
 }
 
-// Карточка объекта
-.objectCard {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+.objectCardLink {
   text-decoration: none;
   color: inherit;
   display: block;
+}
+
+.objectCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  border-top: 4px solid transparent;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3b82f6, #10b981);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  &:hover::before {
-    opacity: 1;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 }
 
 .objectHeader {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding-right: 2rem;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.objectTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .objectIcon {
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  border-radius: 10px;
+  font-size: 20px;
 }
 
 .objectName {
-  font-size: 1.125rem;
+  font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: #1f2937;
   margin: 0;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .objectType {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  background: #e5e7eb;
-  color: #4b5563;
-  border-radius: 9999px;
-  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .objectStats {
-  margin-bottom: 1.25rem;
+  margin-bottom: 16px;
 }
 
 .statRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px dashed #f3f4f6;
-
-  &:last-of-type {
-    border-bottom: none;
-  }
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .statName {
-  font-size: 0.875rem;
   color: #6b7280;
 }
 
 .statValue {
-  font-size: 1rem;
   font-weight: 500;
-  color: #111827;
+  color: #1f2937;
 
   &.freePower {
     color: #10b981;
-    font-weight: 600;
   }
+}
+
+.cellsInfo {
+  font-size: 13px;
+}
+
+.cellsFree {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.cellsFull {
+  color: #ef4444;
+  font-weight: 500;
 }
 
 .tcStats {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding-top: 0.75rem;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid #e5e7eb;
 }
 
 .tcBadge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  background: #f3f4f6;
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
   color: #4b5563;
-  border-radius: 9999px;
 
   &.activeBadge {
-    background: #dbeafe;
+    background-color: #dbeafe;
     color: #1e40af;
   }
 }
 
-// Прогресс бар
 .progressSection {
-  margin-top: 1rem;
+  margin-top: 16px;
 }
 
 .progressHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 6px;
+  font-size: 12px;
 }
 
 .progressLabel {
-  font-size: 0.75rem;
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .progressPercent {
-  font-size: 0.875rem;
   font-weight: 600;
-  color: #2563eb;
+  color: #1f2937;
 }
 
 .progressBar {
   height: 8px;
-  background: #e5e7eb;
-  border-radius: 9999px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  border-radius: 9999px;
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-// Бейдж ресурса
 .resourceBadge {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  font-size: 1.25rem;
+  top: 12px;
+  right: 12px;
+  font-size: 20px;
   opacity: 0.5;
-  transition: opacity 0.2s;
+}
 
-  .objectCard:hover & {
-    opacity: 1;
+.noResults {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  p {
+    color: #6b7280;
+    margin-bottom: 16px;
   }
 }
 
-// Навигационные карточки
-.navCards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+.resetFiltersButton {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
 
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
+  &:hover {
+    background-color: #2563eb;
   }
+}
+
+/* Добавьте эти стили в ваш CSS модуль */
+
+.navigationSection {
+  width: 100%;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.navCards {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1200px;
+  width: 100%;
 }
 
 .navCard {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  position: relative;
+  display: block;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-decoration: none;
-  color: inherit;
+  cursor: pointer;
+  flex: 1 1 300px;
+  max-width: 350px;
+}
+
+.navCard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.5);
+}
+
+.navCard img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.navCard:hover img {
+  transform: scale(1.1);
+}
+
+/* Затемнение при наведении */
+.navCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2),
+    rgba(0, 0, 0, 0.7)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.navCard:hover::after {
+  opacity: 1;
+}
+
+/* Стили для текста */
+.navCard span {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+  transition: bottom 0.3s ease;
+  white-space: nowrap;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 30px;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.navCard:hover span {
+  bottom: 30px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .navCards {
+    gap: 20px;
+  }
+  
+  .navCard {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+  
+  .navCard span {
+    bottom: 30px; /* Текст виден всегда на мобильных */
+    opacity: 1;
+  }
+  
+  .navCard::after {
+    opacity: 0.5; /* Легкое затемнение всегда на мобильных */
+  }
+}
+
+.navCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.navCard {
+  border-radius: 12px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    background: #f9fafb;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 }
 
 .navCardIcon {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  border-radius: 12px;
+  font-size: 32px;
 }
 
 .navCardContent {
@@ -337,84 +586,41 @@
 }
 
 .navCardTitle {
-  font-size: 1.125rem;
+  font-size: 16px;
   font-weight: 600;
-  color: #111827;
-  margin: 0 0 0.25rem 0;
+  color: #1f2937;
+  margin: 0 0 4px;
 }
 
 .navCardDescription {
-  font-size: 0.875rem;
+  font-size: 13px;
   color: #6b7280;
   margin: 0;
 }
 
-// Загрузка
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  gap: 1rem;
-  background: #f9fafb;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Адаптивность
 @media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+    padding: 80px 16px 16px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .searchInput, .filterSelect {
+    width: 100%;
+  }
+
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+
   .objectsGrid {
     grid-template-columns: 1fr;
   }
 
   .navCards {
     grid-template-columns: 1fr;
-  }
-
-  .statsSummary {
-    width: 100%;
-    justify-content: space-around;
-  }
-}
-
-@media (max-width: 480px) {
-  .main {
-    padding: 0.75rem;
-    padding-top: 70px;
-  }
-
-  .objectCard {
-    padding: 1rem;
-  }
-
-  .objectHeader {
-    flex-wrap: wrap;
-  }
-
-  .objectType {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .statRow {
-    font-size: 0.75rem;
-  }
-
-  .statValue {
-    font-size: 0.875rem;
   }
 }

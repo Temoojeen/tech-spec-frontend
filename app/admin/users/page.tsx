@@ -47,9 +47,10 @@ export default function UsersPage() {
         <Header/>
       <div className={styles.header}>
         <h1 className={styles.title}>Управление пользователями</h1>
+        {isAdmin &&
         <Link href="/admin/users/create" className={styles.createButton}>
           + Добавить пользователя
-        </Link>
+        </Link>}
       </div>
 
       <div className={styles.searchBar}>
@@ -71,7 +72,8 @@ export default function UsersPage() {
               <th className={styles.th}>Email</th>
               <th className={styles.th}>Роль</th>
               <th className={styles.th}>Организация</th>
-              <th className={styles.th}>Действия</th>
+              {isAdmin &&
+              <th className={styles.th}>Действия</th>}
             </tr>
           </thead>
           <tbody className={styles.tbody}>
@@ -86,6 +88,7 @@ export default function UsersPage() {
                   </span>
                 </td>
                 <td className={styles.td}>{user.organization_name || '-'}</td>
+                {isAdmin &&
                 <td className={styles.td}>
                   <Link href={`/admin/users/${user.id}/edit`} className={styles.editButton}>
                     Редактировать
@@ -100,7 +103,7 @@ export default function UsersPage() {
                   >
                     Удалить
                   </button>
-                </td>
+                </td>}
               </tr>
             ))}
           </tbody>

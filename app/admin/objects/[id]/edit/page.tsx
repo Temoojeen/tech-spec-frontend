@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
-import { PowerObject } from '@/types';
+import { PowerObject, ResourceType, ObjectType } from '@/types';
 import Button from '@/components/ui/Button';
 import styles from './page.module.scss';
 import Header from '@/components/Header/Header';
@@ -27,12 +27,13 @@ const objectSchema = z.object({
   name: z.string().min(2, 'Название должно содержать минимум 2 символа'),
   type: z.enum(['substation', 'tp', 'kru']),
   resource_type: z.enum(['electricity', 'water']),
+  parent_id: z.number().optional().nullable(),
   power_value: z.number().min(0.01, 'Мощность должна быть больше 0'),
   power_unit: z.enum(['mw', 'kw', 'm3h', 'm3d']),
+  total_cells: z.number().min(0, 'Количество ячеек не может быть отрицательным'),
   description: z.string().optional(),
 }).refine(
   (data) => {
-    // Проверка соответствия единицы измерения типу ресурса
     if (data.resource_type === 'electricity') {
       return ['mw', 'kw'].includes(data.power_unit);
     }
@@ -45,22 +46,29 @@ const objectSchema = z.object({
     message: 'Неверная единица измерения для выбранного типа ресурса',
     path: ['power_unit'],
   }
+).refine(
+  (data) => {
+    if (data.type === 'substation') {
+      return data.total_cells === 0;
+    }
+    return data.total_cells > 0;
+  },
+  {
+    message: 'Для ТП и КРУ необходимо указать количество ячеек (больше 0)',
+    path: ['total_cells'],
+  }
 );
 
 type ObjectFormData = z.infer<typeof objectSchema>;
 
 // ===== Вспомогательные функции =====
-
-// Функция для определения подходящей единицы измерения на основе мощности объекта
 const determinePowerUnit = (obj: PowerObject): { value: number; unit: 'mw' | 'kw' | 'm3h' | 'm3d' } => {
   if (obj.resource_type === 'electricity') {
-    // Для электричества, если мощность в МВт >= 1, показываем в МВт, иначе в кВт
     if (obj.max_power_electricity_mw && obj.max_power_electricity_mw >= 1) {
       return { value: obj.max_power_electricity_mw, unit: 'mw' };
     }
     return { value: obj.max_power_electricity_kw || 0, unit: 'kw' };
   } else {
-    // Для воды показываем в м³/ч (более привычная единица)
     return { value: obj.max_power_water_m3h || 0, unit: 'm3h' };
   }
 };
@@ -86,26 +94,28 @@ export default function EditObjectPage() {
       name: '',
       type: 'substation',
       resource_type: 'electricity',
+      parent_id: undefined,
       power_value: 0,
       power_unit: 'mw',
+      total_cells: 0,
       description: '',
     },
   });
 
   // ===== useWatch для отслеживания изменений =====
-  const resourceType = useWatch({ control, name: 'resource_type' });
-  const powerUnit = useWatch({ control, name: 'power_unit' });
-  const powerValue = useWatch({ control, name: 'power_value' }); // Добавлено
+  const objectType = useWatch({ control, name: 'type' }) as ObjectType;
+  const resourceType = useWatch({ control, name: 'resource_type' }) as ResourceType;
+  const powerUnit = useWatch({ control, name: 'power_unit' }) as string;
 
-  // Автоматически меняем единицу измерения при смене типа ресурса
-  const handleResourceTypeChange = (type: 'electricity' | 'water') => {
-    setValue('resource_type', type);
-    if (type === 'electricity') {
-      setValue('power_unit', 'mw');
-    } else {
-      setValue('power_unit', 'm3h');
-    }
-  };
+  // ===== Загрузка подстанций =====
+  const { data: substations } = useQuery({
+    queryKey: ['substations'],
+    queryFn: async () => {
+      const response = await api.get<PowerObject[]>('/objects/?resource_type=electricity');
+      return response.data.filter(obj => obj.type === 'substation');
+    },
+    enabled: isAdmin,
+  });
 
   // ===== Fetch object =====
   const { data: object, isLoading } = useQuery({
@@ -127,16 +137,32 @@ export default function EditObjectPage() {
       name: object.name,
       type: object.type,
       resource_type: object.resource_type,
+      parent_id: object.parent_id || undefined,
       power_value: powerInfo.value,
       power_unit: powerInfo.unit,
+      total_cells: object.total_cells,
       description: object.description || '',
     });
   }, [object, reset]);
 
+  // Автоматически меняем единицу измерения при смене типа ресурса
+  const handleResourceTypeChange = (type: 'electricity' | 'water') => {
+    setValue('resource_type', type);
+    if (type === 'electricity') {
+      setValue('power_unit', 'mw');
+    } else {
+      setValue('power_unit', 'm3h');
+    }
+  };
+
   // ===== Mutation =====
   const updateMutation = useMutation({
     mutationFn: async (data: ObjectFormData) => {
-      const res = await api.put(`/objects/${id}`, data);
+      const payload = {
+        ...data,
+        parent_id: data.type !== 'substation' ? data.parent_id : null,
+      };
+      const res = await api.put(`/objects/${id}`, payload);
       return res.data;
     },
     onSuccess: () => router.push('/admin/objects'),
@@ -173,7 +199,7 @@ export default function EditObjectPage() {
           onClick={() => router.push('/admin/objects')} 
           className={styles.backLink}
         >
-           Назад к списку
+          ← Назад к списку
         </button>
       </div>
 
@@ -206,12 +232,36 @@ export default function EditObjectPage() {
             <select
               {...register('type')}
               className={`${styles.select} ${errors.type ? styles.error : ''}`}
+              disabled // Тип объекта нельзя изменить после создания
             >
               <option value="substation">Подстанция</option>
               <option value="tp">ТП</option>
               <option value="kru">КРУ</option>
             </select>
           </div>
+
+          {/* Родительская подстанция (для ТП/КРУ) */}
+          {objectType !== 'substation' && (
+            <div className={styles.formField}>
+              <label className={styles.label}>
+                Родительская подстанция <span className={styles.required}>*</span>
+              </label>
+              <select
+                {...register('parent_id', { valueAsNumber: true })}
+                className={`${styles.select} ${errors.parent_id ? styles.error : ''}`}
+              >
+                <option value="">Выберите подстанцию</option>
+                {substations?.map(sub => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name} ({sub.max_power_electricity_mw} МВт)
+                  </option>
+                ))}
+              </select>
+              {errors.parent_id && (
+                <p className={styles.errorText}>{errors.parent_id.message}</p>
+              )}
+            </div>
+          )}
 
           {/* Тип ресурса */}
           <div className={styles.formField}>
@@ -226,7 +276,7 @@ export default function EditObjectPage() {
                 }`}
                 onClick={() => handleResourceTypeChange('electricity')}
               >
-                 Электроснабжение
+                ⚡ Электроснабжение
               </button>
               <button
                 type="button"
@@ -235,12 +285,10 @@ export default function EditObjectPage() {
                 }`}
                 onClick={() => handleResourceTypeChange('water')}
               >
-                 Водоснабжение
+                💧 Водоснабжение
               </button>
             </div>
-            {errors.resource_type && (
-              <p className={styles.errorText}>{errors.resource_type.message}</p>
-            )}
+            <input type="hidden" {...register('resource_type')} />
           </div>
 
           {/* Мощность */}
@@ -312,27 +360,27 @@ export default function EditObjectPage() {
             {errors.power_unit && (
               <p className={styles.errorText}>{errors.power_unit.message}</p>
             )}
-
-            {/* Подсказка с конвертацией - ИСПРАВЛЕНО */}
-            {powerUnit && resourceType === 'electricity' && (
-              <p className={styles.hint}>
-                {powerUnit === 'mw' 
-                  ? '1 МВт = 1000 кВт'
-                  : powerUnit === 'kw' && powerValue >= 1000
-                  ? `${(powerValue / 1000).toFixed(2)} МВт`
-                  : ''}
-              </p>
-            )}
-            {powerUnit && resourceType === 'water' && (
-              <p className={styles.hint}>
-                {powerUnit === 'm3h'
-                  ? '1 м³/ч = 24 м³/сут'
-                  : powerUnit === 'm3d'
-                  ? `${(powerValue / 24).toFixed(2)} м³/ч`
-                  : ''}
-              </p>
-            )}
           </div>
+
+          {/* Количество ячеек (только для ТП/КРУ) */}
+          {objectType !== 'substation' && (
+            <div className={styles.formField}>
+              <label className={styles.label}>
+                Количество ячеек <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                {...register('total_cells', { valueAsNumber: true })}
+                className={`${styles.input} ${errors.total_cells ? styles.error : ''}`}
+                placeholder="12"
+              />
+              {errors.total_cells && (
+                <p className={styles.errorText}>{errors.total_cells.message}</p>
+              )}
+            </div>
+          )}
 
           {/* Описание */}
           <div className={styles.formFieldFull}>
