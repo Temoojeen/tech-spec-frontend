@@ -4,13 +4,19 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import authService from '@/services/auth.service';
-import { User, ApiError } from '@/types';
+import { User } from '@/types';
 
 interface LoginResult {
   success: boolean;
   error?: string;
 }
-
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

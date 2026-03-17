@@ -1,5 +1,17 @@
 // types/index.ts
 export type UserRole = 'admin' | 'user';
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: UserRole;
+  organization_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+// types/index.ts (исправленная версия)
+
+// Типы для объектов
 export type ObjectType = 'substation' | 'tp' | 'kru';
 export type ResourceType = 'electricity' | 'water';
 export type PowerUnit = 'mw' | 'kw' | 'm3h' | 'm3d';
@@ -21,16 +33,13 @@ export interface PowerObject {
 }
 
 // Объект со статистикой (для отображения в списке)
-// types/index.ts (дополнение к существующему файлу)
-
-// Объект со статистикой (для отображения в списке)
 export interface PowerObjectWithStats extends PowerObject {
   available_cells: number;
   occupied_cells: number;
   occupied_power: number;
   free_power: number;
   free_power_unit: string;
-  usage_percent: number; // Добавляем это поле
+  usage_percent: number;
 }
 
 // Статистика объекта
@@ -74,9 +83,9 @@ export type TCStatus = 'active' | 'expired' | 'cancelled';
 export interface TechnicalCondition {
   id: number;
   organization_id: number;
-  organization_name?: string;
+  organization_name: string; // ИЗМЕНЕНО: теперь обязательное
   object_id: number;
-  object_name?: string;
+  object_name: string; // ИЗМЕНЕНО: теперь обязательное
   object_type?: string;
   cell_number: number;
   resource_type: ResourceType;
@@ -121,52 +130,11 @@ export interface Organization {
   created_at: string;
   updated_at: string;
 }
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: UserRole;
-  organization_name?: string;
-  created_at?: string;
-  updated_at?: string;
-}
 
-// Вспомогательные функции для отображения
-export const getObjectTypeLabel = (type: ObjectType): string => {
-  switch (type) {
-    case 'substation': return 'Подстанция';
-    case 'tp': return 'ТП';
-    case 'kru': return 'КРУ';
-    default: return type;
-  }
-};
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
-export const getResourceTypeLabel = (type: ResourceType): string => {
-  switch (type) {
-    case 'electricity': return 'Электроснабжение';
-    case 'water': return 'Водоснабжение';
-    default: return type;
-  }
-};
-
-export const getTCTypeLabel = (type: TCType): string => {
-  switch (type) {
-    case 'permanent': return 'Постоянное';
-    case 'temporary': return 'Временное';
-    default: return type;
-  }
-};
-
-export const getTCStatusLabel = (status: TCStatus): string => {
-  switch (status) {
-    case 'active': return 'Активный';
-    case 'expired': return 'Истекший';
-    case 'cancelled': return 'Отмененный';
-    default: return status;
-  }
-};
-
-export const getUnitDisplayName = (unit: PowerUnit): string => {
+// Функция для получения метки единицы измерения
+export const getUnitLabel = (unit: PowerUnit): string => {
   switch (unit) {
     case 'mw': return 'МВт';
     case 'kw': return 'кВт';
@@ -176,14 +144,56 @@ export const getUnitDisplayName = (unit: PowerUnit): string => {
   }
 };
 
+// Функция для получения метки статуса
+export const getStatusLabel = (status: TCStatus): string => {
+  switch (status) {
+    case 'active': return 'Активный';
+    case 'expired': return 'Истекший';
+    case 'cancelled': return 'Отмененный';
+    default: return status;
+  }
+};
+
+// Функция для получения метки типа объекта
+export const getObjectTypeLabel = (type: ObjectType): string => {
+  switch (type) {
+    case 'substation': return 'Подстанция';
+    case 'tp': return 'ТП';
+    case 'kru': return 'КРУ';
+    default: return type;
+  }
+};
+
+// Функция для получения метки типа ресурса
+export const getResourceTypeLabel = (type: ResourceType): string => {
+  switch (type) {
+    case 'electricity': return 'Электроснабжение';
+    case 'water': return 'Водоснабжение';
+    default: return type;
+  }
+};
+
+// Функция для получения метки типа ТУ
+export const getTCTypeLabel = (type: TCType): string => {
+  switch (type) {
+    case 'permanent': return 'Постоянное';
+    case 'temporary': return 'Временное';
+    default: return type;
+  }
+};
+
 // Форматирование мощности для отображения
-export const formatPower = (amount: number, resourceType: ResourceType): string => {
+export const formatPower = (amount: number, resourceType: ResourceType, unit?: PowerUnit): string => {
   if (resourceType === 'electricity') {
-    if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(2)} МВт`;
+    if (unit === 'mw' || (unit === 'kw' && amount >= 1000)) {
+      const value = unit === 'mw' ? amount : amount / 1000;
+      return `${value.toFixed(2)} МВт`;
     }
     return `${amount.toFixed(2)} кВт`;
   } else {
+    if (unit === 'm3d') {
+      return `${amount.toFixed(2)} м³/сут`;
+    }
     return `${amount.toFixed(2)} м³/ч`;
   }
 };

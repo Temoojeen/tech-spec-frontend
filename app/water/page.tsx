@@ -6,7 +6,13 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useTC } from '@/hooks/useTC';
 import TCTable from '@/components/tc/TCTable';
-import { TCType, TCStatus, TechnicalCondition, getUnitLabel, getStatusLabel } from '@/types';
+import { 
+  TCType, 
+  TCStatus, 
+  TechnicalCondition, 
+  getUnitLabel, 
+  getStatusLabel 
+} from '@/types'; // Импорт из правильного места
 import styles from './page.module.scss';
 import Header from '@/components/Header/Header';
 import * as XLSX from 'xlsx';
