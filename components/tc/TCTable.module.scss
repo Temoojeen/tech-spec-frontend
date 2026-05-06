@@ -1,82 +1,239 @@
-@import '@/styles/variables';
-
 .container {
+  width: 100%;
   overflow-x: auto;
-  background-color: $white;
-  border-radius: $radius-lg;
-  box-shadow: $shadow;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
   min-width: 800px;
 }
 
 .thead {
-  background-color: $gray-50;
-  border-bottom: 1px solid $gray-200;
-}
-
-.th {
-  padding: $spacing-3 $spacing-4;
-  text-align: left;
-  font-size: $text-xs;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: $gray-500;
-}
-
-.tbody {
-  background-color: $white;
-}
-
-.tr {
-  border-bottom: 1px solid $gray-200;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   
-  &:hover {
-    background-color: $gray-50;
+  .th {
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    
+    &:first-child {
+      border-top-left-radius: 12px;
+    }
+    
+    &:last-child {
+      border-top-right-radius: 12px;
+    }
   }
 }
 
-.td {
-  padding: $spacing-4;
-  white-space: nowrap;
-  font-size: $text-sm;
-  color: $gray-900;
+.tbody {
+  .tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #eef2f6;
+    
+    &:hover {
+      background-color: #f8fafc;
+      transform: scale(1.01);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  
+  .td {
+    padding: 14px 20px;
+    color: #1e293b;
+    vertical-align: middle;
+    font-size: 14px;
+    
+    &:first-child {
+      font-weight: 500;
+      color: #0f172a;
+    }
+  }
 }
 
-.loading {
+// Стили для статусов
+.statusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
   text-align: center;
-  padding: $spacing-8;
-  color: $gray-600;
-  font-size: $text-base;
+  min-width: 100px;
+  
+  &.statusActive {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  &.statusExpired {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  &.statusPending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
+  &.statusCancelled {
+    background: #f1f5f9;
+    color: #475569;
+  }
 }
 
-.empty {
-  text-align: center;
-  padding: $spacing-8;
-  color: $gray-500;
-  font-size: $text-base;
-  background-color: $white;
-  border-radius: $radius-lg;
-  box-shadow: $shadow;
+// Действия
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.editButton {
-  color: $primary-color;
-  margin-right: $spacing-4;
+.actionLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 16px;
   
   &:hover {
-    color: $primary-hover;
+    transform: translateY(-2px);
+  }
+  
+  &.viewLink {
+    background: #e0e7ff;
+    color: #4338ca;
+    
+    &:hover {
+      background: #c7d2fe;
+    }
+  }
+  
+  &.editLink {
+    background: #dbeafe;
+    color: #1e40af;
+    
+    &:hover {
+      background: #bfdbfe;
+    }
   }
 }
 
 .deleteButton {
-  color: $danger-color;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
   
   &:hover {
-    color: darken($danger-color, 10%);
+    background: #fecaca;
+    transform: translateY(-2px);
   }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Состояния загрузки и пустого состояния
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: #ffffff;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 14px;
+  
+  &::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: #f8fafc;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 14px;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
+}
+
+// Анимация загрузки
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Адаптивность для мобильных устройств
+@media (max-width: 768px) {
+  .container {
+    border-radius: 8px;
+  }
+  
+  .thead .th {
+    padding: 12px 16px;
+    font-size: 11px;
+  }
+  
+  .tbody .td {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+  
+  .actionLink,
+  .deleteButton {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}
+
+// Чередование строк (опционально)
+.tbody .tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.tbody .tr:nth-child(even):hover {
+  background-color: #f8fafc;
 }

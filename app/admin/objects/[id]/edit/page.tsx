@@ -199,7 +199,7 @@ export default function EditObjectPage() {
           onClick={() => router.push('/admin/objects')} 
           className={styles.backLink}
         >
-          ← Назад к списку
+           Назад к списку
         </button>
       </div>
 

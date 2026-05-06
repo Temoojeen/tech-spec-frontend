@@ -30,6 +30,9 @@ interface AvailableCellsResponse {
 /* =========================
    ZOD SCHEMA
 ========================= */
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ACCEPTED_FILE_TYPES = ['application/pdf'];
+
 const tcSchema = z
   .object({
     organization_id: z
@@ -42,7 +45,7 @@ const tcSchema = z
 
     cell_number: z
       .number()
-      .refine(val => !isNaN(val) && val > 0, { message: 'Выберите ячейку' }),
+      .refine(val => !isNaN(val) && val >= 0, { message: 'Выберите ячейку' }),
 
     resource_type: z.enum(['electricity', 'water'] as const),
 
@@ -61,6 +64,18 @@ const tcSchema = z
     expiry_date: z.string().optional(),
 
     notes: z.string().optional(),
+
+    document_file: z
+      .any()
+      .refine((file) => file instanceof File, 'Необходимо прикрепить PDF файл')
+      .refine(
+        (file) => file instanceof File && file.size <= MAX_FILE_SIZE,
+        'Размер файла не должен превышать 10 МБ'
+      )
+      .refine(
+        (file) => file instanceof File && ACCEPTED_FILE_TYPES.includes(file.type),
+        'Разрешены только PDF файлы'
+      ),
   })
   .refine(
     data => data.tc_type === 'permanent' || (data.tc_type === 'temporary' && !!data.expiry_date),
@@ -102,12 +117,14 @@ export default function CreateTCPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    
     formState: { errors },
   } = useForm<TCFormData>({
     resolver: zodResolver(tcSchema),
@@ -115,6 +132,7 @@ export default function CreateTCPage() {
       resource_type: 'electricity',
       tc_type: 'permanent',
       power_unit: 'kw',
+      cell_number: 0,
     },
   });
 
@@ -155,14 +173,20 @@ export default function CreateTCPage() {
     },
   });
 
-  // Фильтруем объекты по типу ресурса и исключаем подстанции
+  // Фильтруем объекты — все кроме подстанций
   const availableObjects = useMemo(() => {
     if (!allObjects) return [];
     return allObjects.filter(obj => 
       obj.resource_type === resourceType && 
-      obj.type !== 'substation' // Только ТП и КРУ
+      obj.type !== 'substation'
     );
   }, [allObjects, resourceType]);
+
+  // Находим выбранный объект
+  const selectedObject = useMemo(() => {
+    if (!selectedObjectId || !allObjects) return null;
+    return allObjects.find(obj => obj.id === selectedObjectId) || null;
+  }, [selectedObjectId, allObjects]);
 
   // Загружаем информацию о свободных ячейках при выборе объекта
   const { data: cellData, refetch: refetchCells } = useQuery({
@@ -177,23 +201,49 @@ export default function CreateTCPage() {
 
   // Сбрасываем выбранную ячейку при смене объекта
   useEffect(() => {
-    setValue('cell_number', undefined as unknown as number);
-  }, [selectedObjectId, setValue]);
+    if (selectedObject && (selectedObject.type === 'vl' || selectedObject.type === 'kl')) {
+      setValue('cell_number', 0);
+    } else {
+      setValue('cell_number', undefined as unknown as number);
+    }
+  }, [selectedObjectId, selectedObject, setValue]);
 
   /* =========================
      CREATE MUTATION
   ========================= */
   const createMutation = useMutation({
     mutationFn: async (data: TCFormData) => {
-      const payload = {
-        ...data,
-        issue_date: new Date(data.issue_date).toISOString(),
-        expiry_date: data.tc_type === 'temporary' && data.expiry_date
-          ? new Date(data.expiry_date).toISOString()
-          : null,
-      };
+      const formData = new FormData();
+      
+      // Добавляем все поля в FormData
+      formData.append('organization_id', data.organization_id.toString());
+      formData.append('object_id', data.object_id.toString());
+      formData.append('cell_number', data.cell_number.toString());
+      formData.append('resource_type', data.resource_type);
+      formData.append('tc_type', data.tc_type);
+      formData.append('tc_number', data.tc_number);
+      formData.append('power_amount', data.power_amount.toString());
+      formData.append('power_unit', data.power_unit);
+      formData.append('issue_date', data.issue_date);
+      
+      if (data.tc_type === 'temporary' && data.expiry_date) {
+        formData.append('expiry_date', data.expiry_date);
+      }
+      
+      if (data.notes) {
+        formData.append('notes', data.notes);
+      }
 
-      const res = await api.post('/technical-conditions', payload);
+      // Добавляем PDF файл
+      if (data.document_file instanceof File) {
+        formData.append('document_file', data.document_file);
+      }
+
+      const res = await api.post('/technical-conditions', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -205,7 +255,7 @@ export default function CreateTCPage() {
         setServerError('Недостаточно свободной мощности на выбранном объекте');
       } else if (errorMsg?.includes('ячейка уже занята')) {
         setServerError('Эта ячейка уже занята. Пожалуйста, выберите другую');
-        refetchCells(); // Обновляем список свободных ячеек
+        refetchCells();
       } else {
         setServerError(errorMsg || 'Ошибка при создании ТУ. Попробуйте снова.');
       }
@@ -234,11 +284,23 @@ export default function CreateTCPage() {
       await api.post(`/objects/${selectedObjectId}/add-cells`, {
         additional_cells: num
       });
-      refetchCells(); // Обновляем список ячеек
+      refetchCells();
       alert(`Добавлено ${num} ячеек`);
     } catch (error) {
       alert('Ошибка при добавлении ячеек');
       console.log(error)
+    }
+  };
+
+  // Обработчик выбора файла
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFileName(file.name);
+      setValue('document_file', file);
+    } else {
+      setSelectedFileName('');
+      setValue('document_file', undefined);
     }
   };
 
@@ -336,7 +398,9 @@ export default function CreateTCPage() {
               <option value="">Выберите объект</option>
               {availableObjects.map(obj => (
                 <option key={obj.id} value={obj.id}>
-                  {obj.name} — {obj.resource_type === 'electricity' 
+                  {obj.name} ({obj.type === 'vl' ? 'ВЛ' : obj.type === 'kl' ? 'КЛ' : obj.type === 'tp' ? 'ТП' : 'КРУ'})
+                  {' — '}
+                  {obj.resource_type === 'electricity' 
                     ? `${obj.max_power_electricity_kw} кВт` 
                     : `${obj.max_power_water_m3h} м³/ч`}
                 </option>
@@ -345,6 +409,11 @@ export default function CreateTCPage() {
             {errors.object_id && (
               <p className={styles.errorText}>{errors.object_id.message}</p>
             )}
+            {availableObjects.length === 0 && (
+              <p className={styles.hint}>
+                Нет доступных объектов с выбранным типом ресурса
+              </p>
+            )}
           </div>
 
           {/* Информация о выбранном объекте и выбор ячейки */}
@@ -352,54 +421,69 @@ export default function CreateTCPage() {
             <div className={styles.formFieldFull}>
               <div className={styles.objectInfo}>
                 <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Тип объекта:</span>
+                  <span className={styles.infoValue}>
+                    {selectedObject?.type === 'tp' && 'ТП'}
+                    {selectedObject?.type === 'kru' && 'КРУ'}
+                    {selectedObject?.type === 'vl' && 'ВЛ'}
+                    {selectedObject?.type === 'kl' && 'КЛ'}
+                  </span>
+                </div>
+                <div className={styles.infoRow}>
                   <span className={styles.infoLabel}>Свободная мощность:</span>
                   <span className={styles.infoValue}>
                     {cellData.free_power.toFixed(2)} {cellData.free_power_unit}
                   </span>
                 </div>
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Ячейки:</span>
-                  <span className={styles.infoValue}>
-                    {cellData.available_cells.length} / {cellData.total_cells} свободно
-                  </span>
-                </div>
+                {/* Показываем ячейки только для ТП и КРУ */}
+                {cellData.total_cells > 0 && (
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoLabel}>Ячейки:</span>
+                    <span className={styles.infoValue}>
+                      {cellData.available_cells.length} / {cellData.total_cells} свободно
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {cellData.available_cells.length > 0 ? (
-                <div className={styles.formField}>
-                  <label className={styles.label}>
-                    Выберите ячейку <span className={styles.required}>*</span>
-                  </label>
-                  <select
-                    {...register('cell_number', { valueAsNumber: true })}
-                    className={`${styles.select} ${errors.cell_number ? styles.error : ''}`}
-                  >
-                    <option value="">Выберите ячейку</option>
-                    {cellData.available_cells.map((cellNum: number) => (
-                      <option key={cellNum} value={cellNum}>
-                        Ячейка №{cellNum}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.cell_number && (
-                    <p className={styles.errorText}>{errors.cell_number.message}</p>
-                  )}
-                </div>
-              ) : (
-                <div className={styles.warning}>
-                  <p className={styles.warningText}>
-                    ⚠️ Нет свободных ячеек
-                  </p>
-                  {cellData.free_power > 0 && (
-                    isAdmin &&
-                    <button
-                      type="button"
-                      onClick={handleAddCells}
-                      className={styles.addCellButton}
+              {/* Выбор ячейки только для ТП/КРУ */}
+              {cellData.total_cells > 0 ? (
+                cellData.available_cells.length > 0 ? (
+                  <div className={styles.formField}>
+                    <label className={styles.label}>
+                      Выберите ячейку <span className={styles.required}>*</span>
+                    </label>
+                    <select
+                      {...register('cell_number', { valueAsNumber: true })}
+                      className={`${styles.select} ${errors.cell_number ? styles.error : ''}`}
                     >
-                      + Добавить ячейку
-                    </button>
-                  )}
+                      <option value="">Выберите ячейку</option>
+                      {cellData.available_cells.map((cellNum: number) => (
+                        <option key={cellNum} value={cellNum}>
+                          Ячейка №{cellNum}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.cell_number && (
+                      <p className={styles.errorText}>{errors.cell_number.message}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className={styles.warning}>
+                    <p className={styles.warningText}>⚠️ Нет свободных ячеек</p>
+                    {cellData.free_power > 0 && isAdmin && (
+                      <button type="button" onClick={handleAddCells} className={styles.addCellButton}>
+                        + Добавить ячейку
+                      </button>
+                    )}
+                  </div>
+                )
+              ) : (
+                <div className={styles.objectInfo}>
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoLabel}>Ячейка:</span>
+                    <span className={styles.infoValue}>Не требуется для данного типа объекта</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -546,6 +630,41 @@ export default function CreateTCPage() {
               className={styles.textarea}
               placeholder="Дополнительная информация..."
             />
+          </div>
+
+          {/* PDF файл */}
+          <div className={styles.formFieldFull}>
+            <label className={styles.label}>
+              Технические условия (PDF) <span className={styles.required}>*</span>
+            </label>
+            <div className={styles.fileUploadContainer}>
+              <input
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={handleFileChange}
+                className={styles.fileInput}
+                id="document_file"
+              />
+              <label htmlFor="document_file" className={styles.fileLabel}>
+                {selectedFileName ? (
+                  <>
+                    <span className={styles.fileIcon}>📄</span>
+                    <span className={styles.fileName}>{selectedFileName}</span>
+                    <span className={styles.fileChange}>Изменить</span>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.fileIcon}>📎</span>
+                    <span>Прикрепить PDF файл</span>
+                  </>
+                )}
+              </label>
+            </div>
+            {errors.document_file && (
+              <p className={styles.errorText}>
+                {errors.document_file.message?.toString() || 'Ошибка загрузки файла'}
+              </p>
+            )}
           </div>
         </div>
 

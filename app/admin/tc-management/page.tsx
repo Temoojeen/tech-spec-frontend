@@ -152,7 +152,13 @@ export default function TCManagementPage() {
                       href={`/admin/tc-management/${tc.id}/edit`} 
                       className={styles.editButton}
                     >
-                      Редактировать
+                      ✏️ 
+                    </Link>
+                    <Link 
+                      href={`/tc-management/${tc.id}`} 
+                      className={styles.editButton}
+                    >
+                      <i>👁 </i>
                     </Link>
                     <button
                       onClick={() => {
@@ -162,7 +168,7 @@ export default function TCManagementPage() {
                       }}
                       className={styles.deleteButton}
                     >
-                      Удалить
+                      🗑
                     </button>
                   </td>}
                 </tr>

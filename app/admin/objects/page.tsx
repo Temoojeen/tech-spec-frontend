@@ -61,6 +61,8 @@ export default function ObjectsPage() {
       case 'substation': return '⚡';
       case 'tp': return '🔧';
       case 'kru': return '⚙️';
+      case 'vl': return '🔌';
+      case 'kl': return '🔗';
       default: return '📦';
     }
   };
@@ -155,7 +157,7 @@ export default function ObjectsPage() {
                       </span>
                     </td>
                     <td className={styles.td}>
-                      {obj.type !== 'substation' ? (
+                      {(obj.type === 'tp' || obj.type === 'kru') ? (
                         <div className={styles.cellsInfo}>
                           <span className={`${styles.cellsBadge} ${
                             obj.available_cells > 0 ? styles.hasFree : styles.noFree
@@ -241,7 +243,13 @@ export default function ObjectsPage() {
           <div className={styles.statCard}>
             <span className={styles.statLabel}>ТП/КРУ:</span>
             <span className={styles.statValue}>
-              {objects.filter(obj => obj.type !== 'substation').length}
+              {objects.filter(obj => obj.type === 'tp' || obj.type === 'kru').length}
+            </span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>ВЛ/КЛ:</span>
+            <span className={styles.statValue}>
+              {objects.filter(obj => obj.type === 'vl' || obj.type === 'kl').length}
             </span>
           </div>
         </div>

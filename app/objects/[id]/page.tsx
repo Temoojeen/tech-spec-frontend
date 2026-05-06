@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import api from '@/services/api';
 import { 
   PowerObject, TechnicalCondition, Organization, 
-  getTCStatusLabel
+  getStatusLabel
 } from '@/types';
 import Header from '@/components/Header/Header';
 import styles from './page.module.scss';
@@ -355,16 +355,23 @@ console.log(selectedCell)
                             </div>
                           )}
                           <div className={`${styles.tcStatus} ${styles[cellInfo.tc.status]}`}>
-                            {getTCStatusLabel(cellInfo.tc.status)}
-                          </div>
+  {getStatusLabel(cellInfo.tc.status)}
+</div>
                         </div>
                         {isAdmin &&
+                        <div>
                         <Link 
                           href={`/admin/tc-management/${cellInfo.tc.id}/edit`}
                           className={styles.tcEditLink}
                         >
                           Редактировать ТУ
-                        </Link>}
+                        </Link> <Link 
+                          href={`/tc-management/${cellInfo.tc.id}`}
+                          className={styles.tcEditLink}
+                        >
+                          Просмотреть ТУ
+                        </Link></div>}
+
                       </div>
                     )}
                     

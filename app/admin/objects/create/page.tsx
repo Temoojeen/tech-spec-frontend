@@ -27,7 +27,7 @@ interface ApiError {
 // ===== Zod схема =====
 const objectSchema = z.object({
   name: z.string().min(2, 'Название должно содержать минимум 2 символа'),
-  type: z.enum(['substation', 'tp', 'kru']),
+  type: z.enum(['substation', 'tp', 'kru', 'vl', 'kl']),
   resource_type: z.enum(['electricity', 'water']),
   parent_id: z.number().optional().nullable(),
   power_value: z.number().min(0.01, 'Мощность должна быть больше 0'),
@@ -51,8 +51,8 @@ const objectSchema = z.object({
   }
 ).refine(
   (data) => {
-    // Для подстанций не нужны ячейки и parent_id
-    if (data.type === 'substation') {
+    // Для подстанций, ВЛ и КЛ не нужны ячейки
+    if (data.type === 'substation' || data.type === 'vl' || data.type === 'kl') {
       return data.total_cells === 0;
     }
     // Для ТП и КРУ нужны ячейки
@@ -106,7 +106,7 @@ export default function CreateObjectPage() {
       // Фильтруем только подстанции
       return response.data.filter(obj => obj.type === 'substation');
     },
-    enabled: isAdmin && objectType !== 'substation',
+    enabled: isAdmin && (objectType === 'tp' || objectType === 'kru'),
   });
 
   // Автоматически меняем единицу измерения при смене типа ресурса
@@ -121,11 +121,11 @@ export default function CreateObjectPage() {
 
   // Сброс полей при смене типа объекта
   useEffect(() => {
-    if (objectType === 'substation') {
+    if (objectType === 'substation' || objectType === 'vl' || objectType === 'kl') {
       setValue('parent_id', undefined);
       setValue('total_cells', 0);
     } else {
-      setValue('total_cells', 1); // По умолчанию 1 ячейка
+      setValue('total_cells', 1); // По умолчанию 1 ячейка для ТП/КРУ
     }
   }, [objectType, setValue]);
 
@@ -135,7 +135,8 @@ export default function CreateObjectPage() {
       // Подготавливаем данные для отправки
       const payload = {
         ...data,
-        parent_id: data.type !== 'substation' ? data.parent_id : null,
+        parent_id: (data.type === 'tp' || data.type === 'kru') ? data.parent_id : null,
+        total_cells: (data.type === 'substation' || data.type === 'vl' || data.type === 'kl') ? 0 : data.total_cells,
       };
       const response = await api.post('/objects/', payload);
       return response.data;
@@ -174,7 +175,7 @@ export default function CreateObjectPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Создание нового объекта</h1>
         <Link href="/admin/objects" className={styles.backLink}>
-          ← Назад к списку
+           Назад к списку
         </Link>
       </div>
 
@@ -210,18 +211,18 @@ export default function CreateObjectPage() {
             </label>
             <select
               {...register('type')}
-              className={`${styles.select} ${
-                errors.type ? styles.error : ''
-              }`}
+              className={`${styles.select} ${errors.type ? styles.error : ''}`}
             >
               <option value="substation">Подстанция</option>
               <option value="tp">ТП</option>
               <option value="kru">КРУ</option>
+              <option value="vl">Воздушная линия (ВЛ)</option>
+              <option value="kl">Кабельная линия (КЛ)</option>
             </select>
           </div>
 
-          {/* Родительская подстанция (для ТП/КРУ) */}
-          {objectType !== 'substation' && (
+          {/* Родительская подстанция (только для ТП/КРУ) */}
+          {(objectType === 'tp' || objectType === 'kru') && (
             <div className={styles.formField}>
               <label className={styles.label}>
                 Родительская подстанция <span className={styles.required}>*</span>
@@ -351,7 +352,7 @@ export default function CreateObjectPage() {
           </div>
 
           {/* Количество ячеек (только для ТП/КРУ) */}
-          {objectType !== 'substation' && (
+          {(objectType === 'tp' || objectType === 'kru') && (
             <div className={styles.formField}>
               <label className={styles.label}>
                 Количество ячеек <span className={styles.required}>*</span>

@@ -41,7 +41,7 @@ const tcSchema = z
 
     cell_number: z
       .number()
-      .refine(val => !isNaN(val) && val > 0, { message: 'Выберите ячейку' }),
+      .refine(val => !isNaN(val) && val >= 0, { message: 'Выберите ячейку' }),
 
     resource_type: z.enum(['electricity', 'water'] as const),
 
@@ -124,6 +124,7 @@ export default function EditTCPage() {
       tc_type: 'permanent',
       resource_type: 'electricity',
       power_unit: 'kw',
+      cell_number: 0,
     },
   });
 
@@ -178,7 +179,7 @@ export default function EditTCPage() {
     enabled: isAdmin,
   });
 
-  // Фильтруем объекты по типу ресурса
+  // Фильтруем объекты — все кроме подстанций
   const availableObjects = useMemo(() => {
     if (!allObjects) return [];
     return allObjects.filter(obj => 
@@ -186,6 +187,12 @@ export default function EditTCPage() {
       obj.type !== 'substation'
     );
   }, [allObjects, resourceType]);
+
+  // Находим выбранный объект
+  const selectedObject = useMemo(() => {
+    if (!selectedObjectId || !allObjects) return null;
+    return allObjects.find(obj => obj.id === selectedObjectId) || null;
+  }, [selectedObjectId, allObjects]);
 
   // Загружаем информацию о свободных ячейках
   const { data: cellData, refetch: refetchCells } = useQuery({
@@ -219,28 +226,47 @@ export default function EditTCPage() {
     });
   }, [tc, reset]);
 
-  // Сбрасываем выбранную ячейку при смене объекта
+  // Сбрасываем/устанавливаем ячейку при смене объекта
   useEffect(() => {
-    if (selectedObjectId && selectedObjectId !== tc?.object_id) {
+    if (!selectedObject) return;
+    
+    if (selectedObject.type === 'vl' || selectedObject.type === 'kl') {
+      setValue('cell_number', 0);
+    } else if (selectedObjectId !== tc?.object_id) {
       setValue('cell_number', undefined as unknown as number);
     }
-  }, [selectedObjectId, setValue, tc?.object_id]);
+  }, [selectedObjectId, selectedObject, setValue, tc?.object_id]);
 
   /* =========================
      UPDATE MUTATION
   ========================= */
   const updateMutation = useMutation({
     mutationFn: async (data: TCFormData) => {
-      const payload = {
-        ...data,
-        issue_date: new Date(data.issue_date).toISOString(),
-        expiry_date:
-          data.tc_type === 'temporary' && data.expiry_date
-            ? new Date(data.expiry_date).toISOString()
-            : null,
-      };
+      const formData = new FormData();
+      
+      formData.append('organization_id', data.organization_id.toString());
+      formData.append('object_id', data.object_id.toString());
+      formData.append('cell_number', data.cell_number.toString());
+      formData.append('resource_type', data.resource_type);
+      formData.append('tc_type', data.tc_type);
+      formData.append('tc_number', data.tc_number);
+      formData.append('power_amount', data.power_amount.toString());
+      formData.append('power_unit', data.power_unit);
+      formData.append('issue_date', data.issue_date);
+      
+      if (data.tc_type === 'temporary' && data.expiry_date) {
+        formData.append('expiry_date', data.expiry_date);
+      }
+      
+      if (data.notes) {
+        formData.append('notes', data.notes);
+      }
 
-      const res = await api.put(`/technical-conditions/${id}`, payload);
+      const res = await api.put(`/technical-conditions/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -396,7 +422,9 @@ export default function EditTCPage() {
               <option value="">Выберите объект</option>
               {availableObjects.map(obj => (
                 <option key={obj.id} value={obj.id}>
-                  {obj.name} — {obj.resource_type === 'electricity' 
+                  {obj.name} ({obj.type === 'vl' ? 'ВЛ' : obj.type === 'kl' ? 'КЛ' : obj.type === 'tp' ? 'ТП' : 'КРУ'})
+                  {' — '}
+                  {obj.resource_type === 'electricity' 
                     ? `${obj.max_power_electricity_kw} кВт` 
                     : `${obj.max_power_water_m3h} м³/ч`}
                 </option>
@@ -412,63 +440,78 @@ export default function EditTCPage() {
             <div className={styles.formFieldFull}>
               <div className={styles.objectInfo}>
                 <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Тип объекта:</span>
+                  <span className={styles.infoValue}>
+                    {selectedObject?.type === 'tp' && 'ТП'}
+                    {selectedObject?.type === 'kru' && 'КРУ'}
+                    {selectedObject?.type === 'vl' && 'ВЛ'}
+                    {selectedObject?.type === 'kl' && 'КЛ'}
+                  </span>
+                </div>
+                <div className={styles.infoRow}>
                   <span className={styles.infoLabel}>Свободная мощность:</span>
                   <span className={styles.infoValue}>
                     {cellData.free_power.toFixed(2)} {cellData.free_power_unit}
                   </span>
                 </div>
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Ячейки:</span>
-                  <span className={styles.infoValue}>
-                    {cellData.available_cells.length} / {cellData.total_cells} свободно
-                  </span>
-                </div>
+                {/* Показываем ячейки только для ТП и КРУ */}
+                {cellData.total_cells > 0 && (
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoLabel}>Ячейки:</span>
+                    <span className={styles.infoValue}>
+                      {cellData.available_cells.length} / {cellData.total_cells} свободно
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {cellData.available_cells.length > 0 || selectedObjectId === tc?.object_id ? (
-                <div className={styles.formField}>
-                  <label className={styles.label}>
-                    Выберите ячейку <span className={styles.required}>*</span>
-                  </label>
-                  <select
-                    {...register('cell_number', { valueAsNumber: true })}
-                    className={`${styles.select} ${errors.cell_number ? styles.error : ''}`}
-                  >
-                    <option value="">Выберите ячейку</option>
-                    {/* Если это текущая ячейка, показываем её даже если она занята */}
-                    {selectedObjectId === tc?.object_id && (
-                      <option key={tc.cell_number} value={tc.cell_number}>
-                        Ячейка №{tc.cell_number} (текущая)
-                      </option>
-                    )}
-                    {/* Показываем свободные ячейки */}
-                    {cellData.available_cells
-                      .filter(cell => cell !== tc?.cell_number) // Исключаем текущую, если она уже добавлена
-                      .map((cellNum: number) => (
-                        <option key={cellNum} value={cellNum}>
-                          Ячейка №{cellNum}
-                        </option>
-                      ))}
-                  </select>
-                  {errors.cell_number && (
-                    <p className={styles.errorText}>{errors.cell_number.message}</p>
-                  )}
-                </div>
-              ) : (
-                <div className={styles.warning}>
-                  <p className={styles.warningText}>
-                    ⚠️ Нет свободных ячеек
-                  </p>
-                  {cellData.free_power > 0 && (
-                    isAdmin &&
-                    <button
-                      type="button"
-                      onClick={handleAddCells}
-                      className={styles.addCellButton}
+              {/* Выбор ячейки только для ТП/КРУ */}
+              {cellData.total_cells > 0 ? (
+                cellData.available_cells.length > 0 || selectedObjectId === tc?.object_id ? (
+                  <div className={styles.formField}>
+                    <label className={styles.label}>
+                      Выберите ячейку <span className={styles.required}>*</span>
+                    </label>
+                    <select
+                      {...register('cell_number', { valueAsNumber: true })}
+                      className={`${styles.select} ${errors.cell_number ? styles.error : ''}`}
                     >
-                      + Добавить ячейку
-                    </button>
-                  )}
+                      <option value="">Выберите ячейку</option>
+                      {/* Если это текущая ячейка, показываем её даже если она занята */}
+                      {selectedObjectId === tc?.object_id && (
+                        <option key={tc.cell_number} value={tc.cell_number}>
+                          Ячейка №{tc.cell_number} (текущая)
+                        </option>
+                      )}
+                      {/* Показываем свободные ячейки */}
+                      {cellData.available_cells
+                        .filter(cell => cell !== tc?.cell_number)
+                        .map((cellNum: number) => (
+                          <option key={cellNum} value={cellNum}>
+                            Ячейка №{cellNum}
+                          </option>
+                        ))}
+                    </select>
+                    {errors.cell_number && (
+                      <p className={styles.errorText}>{errors.cell_number.message}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className={styles.warning}>
+                    <p className={styles.warningText}>⚠️ Нет свободных ячеек</p>
+                    {cellData.free_power > 0 && isAdmin && (
+                      <button type="button" onClick={handleAddCells} className={styles.addCellButton}>
+                        + Добавить ячейку
+                      </button>
+                    )}
+                  </div>
+                )
+              ) : (
+                <div className={styles.objectInfo}>
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoLabel}>Ячейка:</span>
+                    <span className={styles.infoValue}>Не требуется для данного типа объекта</span>
+                  </div>
                 </div>
               )}
             </div>

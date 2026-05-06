@@ -1,5 +1,8 @@
 // types/index.ts
+
+// Типы для пользователей
 export type UserRole = 'admin' | 'user';
+
 export interface User {
   id: number;
   username: string;
@@ -9,10 +12,9 @@ export interface User {
   created_at?: string;
   updated_at?: string;
 }
-// types/index.ts (исправленная версия)
 
 // Типы для объектов
-export type ObjectType = 'substation' | 'tp' | 'kru';
+export type ObjectType = 'substation' | 'tp' | 'kru' | 'vl' | 'kl';
 export type ResourceType = 'electricity' | 'water';
 export type PowerUnit = 'mw' | 'kw' | 'm3h' | 'm3d';
 
@@ -83,9 +85,9 @@ export type TCStatus = 'active' | 'expired' | 'cancelled';
 export interface TechnicalCondition {
   id: number;
   organization_id: number;
-  organization_name: string; // ИЗМЕНЕНО: теперь обязательное
+  organization_name: string;
   object_id: number;
-  object_name: string; // ИЗМЕНЕНО: теперь обязательное
+  object_name: string;
   object_type?: string;
   cell_number: number;
   resource_type: ResourceType;
@@ -97,10 +99,18 @@ export interface TechnicalCondition {
   expiry_date?: string | null;
   status: TCStatus;
   document_link?: string;
+  document_file?: string;       // Путь к PDF файлу
   notes?: string;
   created_by?: number;
+  created_by_name?: string;     // Имя пользователя создавшего ТУ
   created_at: string;
   updated_at: string;
+}
+
+// Детальная информация о ТУ с организацией и объектом
+export interface TCDetails extends TechnicalCondition {
+  organization_details?: Organization;
+  object_details?: PowerObject;
 }
 
 // Запрос на создание ТУ
@@ -131,6 +141,15 @@ export interface Organization {
   updated_at: string;
 }
 
+// Запрос на создание организации
+export interface CreateOrganizationRequest {
+  name: string;
+  bin?: string;
+  address?: string;
+  contact_person?: string;
+  contact_phone?: string;
+}
+
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
 // Функция для получения метки единицы измерения
@@ -154,12 +173,13 @@ export const getStatusLabel = (status: TCStatus): string => {
   }
 };
 
-// Функция для получения метки типа объекта
 export const getObjectTypeLabel = (type: ObjectType): string => {
   switch (type) {
     case 'substation': return 'Подстанция';
     case 'tp': return 'ТП';
     case 'kru': return 'КРУ';
+    case 'vl': return 'ВЛ';
+    case 'kl': return 'КЛ';
     default: return type;
   }
 };
@@ -195,5 +215,59 @@ export const formatPower = (amount: number, resourceType: ResourceType, unit?: P
       return `${amount.toFixed(2)} м³/сут`;
     }
     return `${amount.toFixed(2)} м³/ч`;
+  }
+};
+
+// Форматирование даты для отображения
+export const formatDate = (dateString?: string | null): string => {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+// Проверка, истекает ли ТУ скоро (в течение N дней)
+export const isExpiringSoon = (tc: TechnicalCondition, days: number = 30): boolean => {
+  if (!tc.expiry_date || tc.tc_type === 'permanent') return false;
+  const now = new Date();
+  const expiry = new Date(tc.expiry_date);
+  const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return diffDays <= days && diffDays >= 0;
+};
+
+// Получение количества дней до истечения ТУ
+export const getDaysUntilExpiry = (tc: TechnicalCondition): number | null => {
+  if (!tc.expiry_date || tc.tc_type === 'permanent') return null;
+  const now = new Date();
+  const expiry = new Date(tc.expiry_date);
+  const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+// Доступные единицы измерения для типа ресурса
+export const getAvailableUnitsForResource = (resourceType: ResourceType): PowerUnit[] => {
+  switch (resourceType) {
+    case 'electricity':
+      return ['kw', 'mw'];
+    case 'water':
+      return ['m3h', 'm3d'];
+    default:
+      return [];
+  }
+};
+
+// Валидация соответствия единицы измерения типу ресурса
+export const isValidPowerUnit = (resourceType: ResourceType, unit: PowerUnit): boolean => {
+  switch (resourceType) {
+    case 'electricity':
+      return unit === 'kw' || unit === 'mw';
+    case 'water':
+      return unit === 'm3h' || unit === 'm3d';
+    default:
+      return false;
   }
 };
